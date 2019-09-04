@@ -48,6 +48,9 @@ void GpioMonitor::setEnabled(bool enabled)
 
 void GpioMonitor::run()
 {
+    // Initialize the current value
+    setValue(m_gpio->value());
+
     // Poll the GPIO value until the stop is true
     while (true) {
 
@@ -78,8 +81,11 @@ bool GpioMonitor::enable()
         return true;
     }
 
-    QMutexLocker locker(&m_stopMutex);
-    m_stop = false;
+    // Init the GPIO
+    if (!m_gpio->isAvailable()) {
+        qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
+        return false;
+    }
 
     if (!m_gpio->exportGpio()) {
         qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
@@ -95,6 +101,9 @@ bool GpioMonitor::enable()
         qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
         return false;
     }
+
+    QMutexLocker locker(&m_stopMutex);
+    m_stop = false;
 
     // Everything went fine, lets start the poll thread and inform about the result
     start();

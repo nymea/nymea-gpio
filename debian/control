@@ -1,4 +1,4 @@
-Source: libnymea-gpio
+Source: nymea-gpio
 Section: utils
 Priority: optional
 Maintainer: Simon Stürz <simon.stuerz@nymea.io>
@@ -18,13 +18,22 @@ Depends: ${shlibs:Depends},
 Description: Qt 5 based library for GPIO interaction.
   Qt 5 based library for GPIO interaction.
 
+Package: nymea-gpio-tool
+Section: tools
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         libnymea-gpio (= ${binary:Version})
+Description: Qt 5 based tool for GPIO interaction.
+  Qt 5 based tool for GPIO interaction.
+
 Package: libnymea-gpio-dev
 Section: libdevel
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          pkg-config,
-         libnymea-gpio (= ${binary:Version}),
+         libnymea-gpio (= ${binary:Version})
 Description: Qt 5 based library for GPIO interaction - development files
   Development files for Qt 5 based GPIO library.
 

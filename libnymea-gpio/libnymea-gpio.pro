@@ -1,14 +1,7 @@
+include(../nymea-gpio.pri)
+
 TARGET = nymea-gpio
 TEMPLATE = lib
-
-QT -= gui
-
-QMAKE_CXXFLAGS *= -Werror -std=c++11 -g
-QMAKE_LFLAGS *= -std=c++11
-
-VERSION_STRING=$$system('dpkg-parsechangelog | sed -n -e "s/^Version: //p"')
-
-DEFINES += LIBNYMEAGPIO_LIBRARY
 
 SOURCES += \
         gpio.cpp \

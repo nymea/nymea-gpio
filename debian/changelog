@@ -1,4 +1,4 @@
-libnymea-gpio (0.1.0) bionic; urgency=medium
+nymea-gpio (1.0.0) bionic; urgency=medium
 
   * Initial release.
 
