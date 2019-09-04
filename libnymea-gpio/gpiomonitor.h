@@ -11,7 +11,7 @@ class GpioMonitor : public QThread
 {
     Q_OBJECT
 public:
-    explicit GpioMonitor(int gpio, QObject *parent = nullptr);
+    explicit GpioMonitor(int gpio, Gpio::Edge edge = Gpio::EdgeBoth, QObject *parent = nullptr);
     ~GpioMonitor() override;
 
     Gpio::Value value();
@@ -19,6 +19,7 @@ public:
 
 private:
     Gpio *m_gpio = nullptr;
+    Gpio::Edge m_edge = Gpio::EdgeBoth;
     bool m_enabled = false;
 
     // Thread stuff

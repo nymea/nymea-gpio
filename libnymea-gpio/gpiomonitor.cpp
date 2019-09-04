@@ -2,8 +2,9 @@
 
 #include <QMutexLocker>
 
-GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
-    QThread(parent)
+GpioMonitor::GpioMonitor(int gpio, Gpio::Edge edge, QObject *parent) :
+    QThread(parent),
+    m_edge(edge)
 {
     m_gpio = new Gpio(gpio, this);
     connect(this, &GpioMonitor::started, this, &GpioMonitor::onThreadStarted);
@@ -97,8 +98,8 @@ bool GpioMonitor::enable()
         return false;
     }
 
-    if (!m_gpio->setEdgeInterrupt(Gpio::EdgeBoth)) {
-        qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
+    if (!m_gpio->setEdgeInterrupt(m_edge)) {
+        qCWarning(dcGpio()) << "Could not set interrupt for the GPIO monitor.";
         return false;
     }
 
