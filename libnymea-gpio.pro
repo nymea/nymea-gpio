@@ -8,14 +8,15 @@ QMAKE_LFLAGS *= -std=c++11
 
 VERSION_STRING=$$system('dpkg-parsechangelog | sed -n -e "s/^Version: //p"')
 
-
 DEFINES += LIBNYMEAGPIO_LIBRARY
 
 SOURCES += \
-        gpio.cpp
+        gpio.cpp \
+        gpiomonitor.cpp
 
 HEADERS += \
-        gpio.h
+        gpio.h \
+        gpiomonitor.h
 
 target.path = $$[QT_INSTALL_LIBS]
 INSTALLS += target
