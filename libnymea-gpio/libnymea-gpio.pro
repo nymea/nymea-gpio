@@ -3,13 +3,13 @@ include(../nymea-gpio.pri)
 TARGET = nymea-gpio
 TEMPLATE = lib
 
-SOURCES += \
-        gpio.cpp \
-        gpiomonitor.cpp
-
 HEADERS += \
         gpio.h \
         gpiomonitor.h
+
+SOURCES += \
+        gpio.cpp \
+        gpiomonitor.cpp
 
 target.path = $$[QT_INSTALL_LIBS]
 INSTALLS += target

@@ -1,7 +1,8 @@
-QT -= gui
 
-QMAKE_CXXFLAGS *= -Werror -std=c++11 -g
-QMAKE_LFLAGS *= -std=c++11
+QMAKE_CXXFLAGS += -Werror -std=c++11 -g
+QMAKE_LFLAGS += -std=c++11
+
+QT -= gui
 
 top_srcdir=$$PWD
 top_builddir=$$shadowed($$PWD)

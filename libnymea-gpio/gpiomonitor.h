@@ -11,15 +11,23 @@ class GpioMonitor : public QThread
 {
     Q_OBJECT
 public:
-    explicit GpioMonitor(int gpio, Gpio::Edge edge = Gpio::EdgeBoth, QObject *parent = nullptr);
+    explicit GpioMonitor(int gpio, QObject *parent = nullptr);
     ~GpioMonitor() override;
 
+    Gpio::Edge edge() const;
+    void setEdge(Gpio::Edge edge);
+
+    bool activeLow() const;
+    void setActiveLow(bool activeLow);
+
     Gpio::Value value();
+
     bool enabled() const;
 
 private:
-    Gpio *m_gpio = nullptr;
+    int m_gpioNumber = -1;
     Gpio::Edge m_edge = Gpio::EdgeBoth;
+    bool m_activeLow = true;
     bool m_enabled = false;
 
     // Thread stuff
@@ -36,7 +44,7 @@ protected:
     void run() override;
 
 signals:
-    void valueChanged(bool value);
+    void interruptOccured(bool value);
     void enabledChanged(bool enabled);
 
 private slots:
