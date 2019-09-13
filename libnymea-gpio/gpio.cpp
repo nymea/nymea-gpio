@@ -1,55 +1,55 @@
 #include "gpio.h"
 
 /*!
-  \class Gpio
-  \brief Represents a system GPIO in linux systems.
+    \class Gpio
+    \brief Represents a system GPIO in linux systems.
 
-  A "General Purpose Input/Output" (GPIO) is a flexible software-controlled
-  digital signal. They are provided from many kinds of chip, and are familiar
-  to Linux developers working with embedded and custom hardware. Each GPIO
-  represents a bit connected to a particular pin, or "ball" on Ball Grid Array
-  (BGA) packages. Board schematics show which external hardware connects to
-  which GPIOs. Drivers can be written generically, so that board setup code
-  passes such pin configuration data to drivers
-  (\l{https://www.kernel.org/doc/Documentation/gpio/gpio.txt}{source}).
-  General Purpose Input/Output (a.k.a. GPIO) is a generic pin on a chip whose
-  behavior (including whether it is an input or output pin) can be controlled
-  through this class. An object of of the Gpio class represents a pin.
+    A "General Purpose Input/Output" (GPIO) is a flexible software-controlled
+    digital signal. They are provided from many kinds of chip, and are familiar
+    to Linux developers working with embedded and custom hardware. Each GPIO
+    represents a bit connected to a particular pin, or "ball" on Ball Grid Array
+    (BGA) packages. Board schematics show which external hardware connects to
+    which GPIOs. Drivers can be written generically, so that board setup code
+    passes such pin configuration data to drivers
+    (\l{https://www.kernel.org/doc/Documentation/gpio/gpio.txt}{source}).
+    General Purpose Input/Output (a.k.a. GPIO) is a generic pin on a chip whose
+    behavior (including whether it is an input or output pin) can be controlled
+    through this class. An object of of the Gpio class represents a pin.
 
-  \code
-    Gpio *gpioOut = new Gpio(23, this);
-    // Export Gpio
-    if (!gpioOut->exportGpio()) {
-        qWarning() << "Could not export Gpio" << gpioOut->gpioNumber();
-        gpioOut->deleteLater();
-        return;
-    }
-    // Configure Gpio direction
-    if (!gpioOut->setDirection(PiGpio::DirectionOutput)) {
-        qWarning() << "Could not set direction of Gpio" << gpioOut->gpioNumber();
-        gpioOut->deleteLater();
-        return;
-    }
-    gpioOut->setValue(Gpio::ValueHigh)
-  \endcode
+    \code
+        Gpio *gpioOut = new Gpio(23, this);
+        // Export Gpio
+        if (!gpioOut->exportGpio()) {
+            qWarning() << "Could not export Gpio" << gpioOut->gpioNumber();
+            gpioOut->deleteLater();
+            return;
+        }
+        // Configure Gpio direction
+        if (!gpioOut->setDirection(PiGpio::DirectionOutput)) {
+            qWarning() << "Could not set direction of Gpio" << gpioOut->gpioNumber();
+            gpioOut->deleteLater();
+            return;
+        }
+        gpioOut->setValue(Gpio::ValueHigh)
+    \endcode
 
-  \code
-    Gpio *gpioIn = new Gpio(24, this);
-    // Export Gpio
-    if (!gpioIn->exportGpio()) {
-        qWarning() << "Could not export Gpio" << gpioIn->gpioNumber();
-        gpioIn->deleteLater();
-        return;
-    }
-    // Configure Gpio direction
-    if (!gpioIn->setDirection(PiGpio::DirectionInput)) {
-        qWarning() << "Could not set direction of Gpio" << gpioIn->gpioNumber();
-        gpioIn->deleteLater();
-        return;
-    }
-    qDebug() << "Current value" << gpioIn->value();
-  \endcode
-  \sa GpioMonitor, GpioButton
+    \code
+        Gpio *gpioIn = new Gpio(24, this);
+        // Export Gpio
+        if (!gpioIn->exportGpio()) {
+            qWarning() << "Could not export Gpio" << gpioIn->gpioNumber();
+            gpioIn->deleteLater();
+            return;
+        }
+        // Configure Gpio direction
+        if (!gpioIn->setDirection(PiGpio::DirectionInput)) {
+            qWarning() << "Could not set direction of Gpio" << gpioIn->gpioNumber();
+            gpioIn->deleteLater();
+            return;
+        }
+        qDebug() << "Current value" << gpioIn->value();
+    \endcode
+    \sa GpioMonitor, GpioButton
 */
 
 /*! \enum Gpio::Direction
@@ -86,7 +86,7 @@
 
 Q_LOGGING_CATEGORY(dcGpio, "Gpio")
 
-/*! Constructs a \l{Gpio} object to represent a GPIO with the given \a gpio number and \a parent. */
+/*! Constructs a Gpio object to represent a GPIO with the given \a gpio number and \a parent. */
 Gpio::Gpio(int gpio, QObject *parent) :
     QObject(parent),
     m_gpio(gpio),
@@ -96,7 +96,7 @@ Gpio::Gpio(int gpio, QObject *parent) :
 
 }
 
-/*! Destroys and unexports the \l{Gpio}. */
+/*! Destroys and unexports the Gpio. */
 Gpio::~Gpio()
 {
     unexportGpio();
