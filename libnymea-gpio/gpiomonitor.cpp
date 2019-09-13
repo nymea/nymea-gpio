@@ -1,8 +1,42 @@
+/*!
+  \class GpioMonitor
+  \brief Monitor for GPIO interrupts.
+
+  This class allows to monitor an input GPIO for the interrupts depending on the \l{Gpio:Edge} configuration.
+
+  \code
+    GpioMonitor *monitor = new GpioMonitor(112, this);
+
+    if (!monitor->enable()) {
+        qWarning() << "Could not enable GPIO monitor";
+        monitor->deleteLater();
+        return;
+    }
+
+    connect(monitor, &GpioMonitor::interruptOccured, this, [this, monitor](bool value){
+        qDebug() << "GPIO value changed" << value;
+    });
+
+  \endcode
+
+*/
+
+/*! \fn void GpioMonitor::interruptOccured(bool value);
+    This signal will be emitted, if an interrupt on the monitored Gpio occured with the new \a value. This event depends on the Gpio::Edge configuration of the Gpio.
+
+    \sa edge(), setEdge()
+*/
+
+/*! \fn void GpioMonitor::enabledChanged(bool enabled);
+    This signal will be emitted when the GpioMonitor \a enabled changed.
+*/
+
 #include "gpiomonitor.h"
 
 #include <poll.h>
 #include <QMutexLocker>
 
+/*! Constructs a \l{GpioMonitor} object with the given \a gpio number and \a parent. */
 GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
     QThread(parent),
     m_gpioNumber(gpio)
@@ -12,17 +46,28 @@ GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
     connect(this, &GpioMonitor::finished, this, &GpioMonitor::onThreadFinished, Qt::DirectConnection);
 }
 
+/*! Destroys and unexports the Gpio. */
 GpioMonitor::~GpioMonitor()
 {
     disable();
     wait(200);
 }
 
+/*! Returns the edge interrupt configuration for this GpioMonitor.
+
+  \sa Gpio::Edge
+
+*/
 Gpio::Edge GpioMonitor::edge() const
 {
     return m_edge;
 }
 
+/*! Sets the edge interrupt configuration for this GpioMonitor to the given \a edge.
+
+  \sa Gpio::Edge
+
+*/
 void GpioMonitor::setEdge(Gpio::Edge edge)
 {
     if (m_edge == edge)
@@ -31,11 +76,13 @@ void GpioMonitor::setEdge(Gpio::Edge edge)
     m_edge = edge;
 }
 
+/*! Returns true, if the monitor is configured as active low. If active low is true, the GPIO values and interrupt behavior will be inverted. */
 bool GpioMonitor::activeLow() const
 {
     return m_activeLow;
 }
 
+/*! Sets the the monitor to \a activeLow. If active low is true, the GPIO values and interrupt behavior will be inverted. */
 void GpioMonitor::setActiveLow(bool activeLow)
 {
     if (m_activeLow == activeLow)
@@ -44,12 +91,14 @@ void GpioMonitor::setActiveLow(bool activeLow)
     m_activeLow = activeLow;
 }
 
+/*! Returns the current value of the Gpio. */
 Gpio::Value GpioMonitor::value()
 {
     QMutexLocker valueLocker(&m_valueMutex);
     return m_value;
 }
 
+/*! Returns true if this GpioMonitor is enabled. */
 bool GpioMonitor::enabled() const
 {
     return m_enabled;
@@ -181,6 +230,7 @@ void GpioMonitor::onThreadFinished()
     setEnabled(false);
 }
 
+/*! Returns true, if this GpioMonitor was enabled successfully. */
 bool GpioMonitor::enable()
 {
     qCDebug(dcGpio()) << "Enable gpio monitor";
@@ -203,6 +253,7 @@ bool GpioMonitor::enable()
     return true;
 }
 
+/*! Disables this GpioMonitor. The \l{interruptOccured()} signal will not be emitted any more and the Gpio will be unexported. */
 void GpioMonitor::disable()
 {
     qCDebug(dcGpio()) << "Disable gpio monitor";

@@ -32,7 +32,7 @@ private:
 
     // Thread stuff
     QMutex m_valueMutex;
-    Gpio::Value  m_value = Gpio::ValueInvalid;
+    Gpio::Value m_value = Gpio::ValueInvalid;
 
     QMutex m_stopMutex;
     bool m_stop = false;

@@ -1,3 +1,3 @@
 usr/lib/@DEB_HOST_MULTIARCH@/libnymea-gpio.so
-usr/include/libnymea-gpio/* usr/include/libnymea-gpio
-usr/lib/@DEB_HOST_MULTIARCH@/pkgconfig/libnymea-gpio.pc
+usr/lib/@DEB_HOST_MULTIARCH@/pkgconfig/nymea-gpio.pc
+usr/include/nymea-gpio/* usr/include/nymea-gpio/

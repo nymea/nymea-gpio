@@ -1,5 +1,89 @@
 #include "gpio.h"
 
+/*!
+  \class Gpio
+  \brief Represents a system GPIO in linux systems.
+
+  A "General Purpose Input/Output" (GPIO) is a flexible software-controlled
+  digital signal. They are provided from many kinds of chip, and are familiar
+  to Linux developers working with embedded and custom hardware. Each GPIO
+  represents a bit connected to a particular pin, or "ball" on Ball Grid Array
+  (BGA) packages. Board schematics show which external hardware connects to
+  which GPIOs. Drivers can be written generically, so that board setup code
+  passes such pin configuration data to drivers
+  (\l{https://www.kernel.org/doc/Documentation/gpio/gpio.txt}{source}).
+  General Purpose Input/Output (a.k.a. GPIO) is a generic pin on a chip whose
+  behavior (including whether it is an input or output pin) can be controlled
+  through this class. An object of of the Gpio class represents a pin.
+
+  \code
+    Gpio *gpioOut = new Gpio(23, this);
+    // Export Gpio
+    if (!gpioOut->exportGpio()) {
+        qWarning() << "Could not export Gpio" << gpioOut->gpioNumber();
+        gpioOut->deleteLater();
+        return;
+    }
+    // Configure Gpio direction
+    if (!gpioOut->setDirection(PiGpio::DirectionOutput)) {
+        qWarning() << "Could not set direction of Gpio" << gpioOut->gpioNumber();
+        gpioOut->deleteLater();
+        return;
+    }
+    gpioOut->setValue(Gpio::ValueHigh)
+  \endcode
+
+  \code
+    Gpio *gpioIn = new Gpio(24, this);
+    // Export Gpio
+    if (!gpioIn->exportGpio()) {
+        qWarning() << "Could not export Gpio" << gpioIn->gpioNumber();
+        gpioIn->deleteLater();
+        return;
+    }
+    // Configure Gpio direction
+    if (!gpioIn->setDirection(PiGpio::DirectionInput)) {
+        qWarning() << "Could not set direction of Gpio" << gpioIn->gpioNumber();
+        gpioIn->deleteLater();
+        return;
+    }
+    qDebug() << "Current value" << gpioIn->value();
+  \endcode
+  \sa GpioMonitor, GpioButton
+*/
+
+/*! \enum Gpio::Direction
+    This enum type specifies the dirction a \l{Gpio}.
+    \value DirectionInput
+        The \l{Gpio} is configured as \b input.
+    \value DirectionOutput
+        The \l{Gpio} is configured as \b output.
+    \value DirectionInvalid
+        The direction is not valid.
+*/
+
+/*! \enum Gpio::Value
+    This enum type specifies the value a \l{Gpio}.
+    \value ValueLow
+        The \l{Gpio} is low.
+    \value ValueHigh
+        The \l{Gpio} is high.
+    \value ValueInvalid
+        The value is not valid.
+*/
+
+/*! \enum Gpio::Edge
+    This enum type specifies the edge interrupt type of a \l{Gpio}.
+    \value EdgeFalling
+        The \l{Gpio} reacts on falling edge interrupt.
+    \value EdgeRising
+        The \l{Gpio} reacts on rising edge interrupt.
+    \value EdgeBoth
+        The \l{Gpio} reacts on both, rising and falling edge interrupt.
+    \value EdgeNone
+        The \l{Gpio} does not react on interrupts.
+*/
+
 Q_LOGGING_CATEGORY(dcGpio, "Gpio")
 
 /*! Constructs a \l{Gpio} object to represent a GPIO with the given \a gpio number and \a parent. */
