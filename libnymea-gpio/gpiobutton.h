@@ -27,7 +27,7 @@
 #include <QTimer>
 #include <QObject>
 
-#include "gpiomonitor.h"
+class GpioMonitor;
 
 class GpioButton : public QObject
 {

@@ -74,7 +74,8 @@
 */
 
 
-/*! \enum Gpio::Direction
+/*!
+    \enum Gpio::Direction
     This enum type specifies the dirction a Gpio.
 
     \value DirectionInput
@@ -85,19 +86,21 @@
         The direction is not valid.
 */
 
-/*! \enum Gpio::Value
+/*!
+    \enum Gpio::Value
     This enum type specifies the value a Gpio.
 
+    \value ValueInvalid
+        The value is not valid.
     \value ValueLow
         The Gpio is low.
     \value ValueHigh
         The Gpio is high.
-    \value ValueInvalid
-        The value is not valid.
+
 */
 
-
-/*! \enum Gpio::Edge
+/*!
+    \enum Gpio::Edge
     This enum type specifies the edge interrupt type of a Gpio.
 
     \value EdgeFalling
@@ -357,8 +360,7 @@ bool Gpio::activeLow()
     return false;
 }
 
-/*! Returns true if the \a edge of this GPIO could be set correctly. The \a edge parameter specifies,
- *  when an interrupt occurs. */
+/*! Returns true if the \a edge of this GPIO could be set correctly. The \a edge parameter specifies, when an interrupt occurs. */
 bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
 {
 

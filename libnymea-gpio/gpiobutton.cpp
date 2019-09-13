@@ -21,6 +21,7 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "gpiobutton.h"
+#include "gpiomonitor.h"
 
 GpioButton::GpioButton(int gpioNumber, QObject *parent) :
     QObject(parent),
