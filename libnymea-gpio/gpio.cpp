@@ -1,8 +1,7 @@
-#include "gpio.h"
-
 /*!
     \class Gpio
     \brief Represents a system GPIO in linux systems.
+    \inmodule nymea-gpio
 
     A "General Purpose Input/Output" (GPIO) is a flexible software-controlled
     digital signal. They are provided from many kinds of chip, and are familiar
@@ -83,6 +82,8 @@
     \value EdgeNone
         The \l{Gpio} does not react on interrupts.
 */
+
+#include "gpio.h"
 
 Q_LOGGING_CATEGORY(dcGpio, "Gpio")
 

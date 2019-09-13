@@ -1,23 +1,23 @@
 /*!
-  \class GpioMonitor
-  \brief Monitor for GPIO interrupts.
+    \class GpioMonitor
+    \brief Monitor for GPIO interrupts.
 
-  This class allows to monitor an input GPIO for the interrupts depending on the \l{Gpio:Edge} configuration.
+    This class allows to monitor an input GPIO for the interrupts depending on the \l{Gpio:Edge} configuration.
 
-  \code
-    GpioMonitor *monitor = new GpioMonitor(112, this);
+    \code
+        GpioMonitor *monitor = new GpioMonitor(112, this);
 
-    if (!monitor->enable()) {
-        qWarning() << "Could not enable GPIO monitor";
-        monitor->deleteLater();
-        return;
-    }
+        if (!monitor->enable()) {
+            qWarning() << "Could not enable GPIO monitor";
+            monitor->deleteLater();
+            return;
+        }
 
-    connect(monitor, &GpioMonitor::interruptOccured, this, [this, monitor](bool value){
-        qDebug() << "GPIO value changed" << value;
-    });
+        connect(monitor, &GpioMonitor::interruptOccured, this, [this, monitor](bool value){
+            qDebug() << "GPIO value changed" << value;
+        });
 
-  \endcode
+    \endcode
 
 */
 
