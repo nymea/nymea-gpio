@@ -1,6 +1,29 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                         *
+ *  Copyright (C) 2019 Simon Stürz <simon.stuerz@nymea.io>                 *
+ *                                                                         *
+ *  This file is part of nymea-gpio.                                       *
+ *                                                                         *
+ *  This library is free software; you can redistribute it and/or          *
+ *  modify it under the terms of the GNU Lesser General Public             *
+ *  License as published by the Free Software Foundation; either           *
+ *  version 2.1 of the License, or (at your option) any later version.     *
+ *                                                                         *
+ *  This library is distributed in the hope that it will be useful,        *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      *
+ *  Lesser General Public License for more details.                        *
+ *                                                                         *
+ *  You should have received a copy of the GNU Lesser General Public       *
+ *  License along with this library; If not, see                           *
+ *  <http://www.gnu.org/licenses/>.                                        *
+ *                                                                         *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 /*!
     \class GpioMonitor
     \brief Monitor for GPIO interrupts.
+    \inmodule nymea-gpio
 
     This class allows to monitor an input GPIO for the interrupts depending on the \l{Gpio:Edge} configuration.
 
@@ -130,6 +153,7 @@ void GpioMonitor::setEnabled(bool enabled)
     emit enabledChanged(m_enabled);
 }
 
+/*! Reimplementation of the QThread run() method. Within the thread the Gpio value will be polled using poll() 2. */
 void GpioMonitor::run()
 {
     // Create GPIO in the thread for initialisation

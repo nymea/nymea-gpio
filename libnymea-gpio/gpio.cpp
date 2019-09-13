@@ -1,3 +1,25 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                         *
+ *  Copyright (C) 2019 Simon Stürz <simon.stuerz@nymea.io>                 *
+ *                                                                         *
+ *  This file is part of nymea-gpio.                                       *
+ *                                                                         *
+ *  This library is free software; you can redistribute it and/or          *
+ *  modify it under the terms of the GNU Lesser General Public             *
+ *  License as published by the Free Software Foundation; either           *
+ *  version 2.1 of the License, or (at your option) any later version.     *
+ *                                                                         *
+ *  This library is distributed in the hope that it will be useful,        *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      *
+ *  Lesser General Public License for more details.                        *
+ *                                                                         *
+ *  You should have received a copy of the GNU Lesser General Public       *
+ *  License along with this library; If not, see                           *
+ *  <http://www.gnu.org/licenses/>.                                        *
+ *                                                                         *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 /*!
     \class Gpio
     \brief Represents a system GPIO in linux systems.
@@ -48,39 +70,44 @@
         }
         qDebug() << "Current value" << gpioIn->value();
     \endcode
-    \sa GpioMonitor, GpioButton
+    \sa GpioMonitor
 */
 
+
 /*! \enum Gpio::Direction
-    This enum type specifies the dirction a \l{Gpio}.
+    This enum type specifies the dirction a Gpio.
+
     \value DirectionInput
-        The \l{Gpio} is configured as \b input.
+        The Gpio is configured as \b input.
     \value DirectionOutput
-        The \l{Gpio} is configured as \b output.
+        The Gpio is configured as \b output.
     \value DirectionInvalid
         The direction is not valid.
 */
 
 /*! \enum Gpio::Value
-    This enum type specifies the value a \l{Gpio}.
+    This enum type specifies the value a Gpio.
+
     \value ValueLow
-        The \l{Gpio} is low.
+        The Gpio is low.
     \value ValueHigh
-        The \l{Gpio} is high.
+        The Gpio is high.
     \value ValueInvalid
         The value is not valid.
 */
 
+
 /*! \enum Gpio::Edge
-    This enum type specifies the edge interrupt type of a \l{Gpio}.
+    This enum type specifies the edge interrupt type of a Gpio.
+
     \value EdgeFalling
-        The \l{Gpio} reacts on falling edge interrupt.
+        The Gpio reacts on falling edge interrupt.
     \value EdgeRising
-        The \l{Gpio} reacts on rising edge interrupt.
+        The Gpio reacts on rising edge interrupt.
     \value EdgeBoth
-        The \l{Gpio} reacts on both, rising and falling edge interrupt.
+        The Gpio reacts on both, rising and falling edge interrupt.
     \value EdgeNone
-        The \l{Gpio} does not react on interrupts.
+        The Gpio does not react on interrupts.
 */
 
 #include "gpio.h"
@@ -115,13 +142,15 @@ QString Gpio::gpioDirectory() const
     return m_gpioDirectory.canonicalPath();
 }
 
-/*! Returns the number of this \l{Gpio}. \note The Gpio number is mostly not equivalent with the pin number. */
+/*! Returns the number of this Gpio.
+    \note The Gpio number is mostly not equivalent with the pin number.
+*/
 int Gpio::gpioNumber() const
 {
     return m_gpio;
 }
 
-/*! Returns true if this \l{Gpio} could be exported in the system file \tt {/sys/class/gpio/export}. If this Gpio is already exported, this function will return true. */
+/*! Returns true if this Gpio could be exported in the system file \tt {/sys/class/gpio/export}. If this Gpio is already exported, this function will return true. */
 bool Gpio::exportGpio()
 {
     qCDebug(dcGpio()) << "Export GPIO" << m_gpio;
@@ -143,7 +172,7 @@ bool Gpio::exportGpio()
     return true;
 }
 
-/*! Returns true if this \l{Gpio} could be unexported in the system file \tt {/sys/class/gpio/unexport}. */
+/*! Returns true if this Gpio could be unexported in the system file \tt {/sys/class/gpio/unexport}. */
 bool Gpio::unexportGpio()
 {
     qCDebug(dcGpio()) << "Unexport GPIO" << m_gpio;
@@ -193,7 +222,7 @@ bool Gpio::setDirection(Gpio::Direction direction)
     return true;
 }
 
-/*! Returns the direction of this \l{Gpio}. */
+/*! Returns the direction of this Gpio. */
 Gpio::Direction Gpio::direction()
 {
     QFile directionFile(m_gpioDirectory.path() + QDir::separator() + "direction");
@@ -218,7 +247,7 @@ Gpio::Direction Gpio::direction()
     return Gpio::DirectionInvalid;
 }
 
-/*! Returns true if the digital \a value of this \l{Gpio} could be set correctly. */
+/*! Returns true if the digital \a value of this Gpio could be set correctly. */
 bool Gpio::setValue(Gpio::Value value)
 {
     qCDebug(dcGpio()) << "Set GPIO" << m_gpio << "value" << value;
@@ -263,7 +292,7 @@ bool Gpio::setValue(Gpio::Value value)
     return true;
 }
 
-/*! Returns the current digital value of this \l{Gpio}. */
+/*! Returns the current digital value of this Gpio. */
 Gpio::Value Gpio::value()
 {
     QFile valueFile(m_gpioDirectory.path() + QDir::separator() + "value");
@@ -286,7 +315,7 @@ Gpio::Value Gpio::value()
     return Gpio::ValueInvalid;
 }
 
-/*! This method allows to invert the logic of this \l{Gpio}. Returns true, if the GPIO could be set \a activeLow. */
+/*! This method allows to invert the logic of this Gpio. Returns true, if the GPIO could be set \a activeLow. */
 bool Gpio::setActiveLow(bool activeLow)
 {
     qCDebug(dcGpio()) << "Set GPIO" << m_gpio << "active low" << activeLow;
@@ -308,7 +337,7 @@ bool Gpio::setActiveLow(bool activeLow)
     return true;
 }
 
-/*! Returns true if the logic of this \l{Gpio} is inverted (1 = low, 0 = high). */
+/*! Returns true if the logic of this Gpio is inverted (1 = low, 0 = high). */
 bool Gpio::activeLow()
 {
     QFile activeLowFile(m_gpioDirectory.path() + QDir::separator() + "active_low");
@@ -365,7 +394,7 @@ bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
     return true;
 }
 
-/*! Returns the edge interrupt of this \l{Gpio}. */
+/*! Returns the edge interrupt of this Gpio. */
 Gpio::Edge Gpio::edgeInterrupt()
 {
     QFile edgeFile(m_gpioDirectory.path() + QDir::separator() + "edge");
@@ -393,7 +422,7 @@ Gpio::Edge Gpio::edgeInterrupt()
 }
 
 
-
+/*! Prints the given \a gpio to \a debug. */
 QDebug operator<<(QDebug debug, Gpio *gpio)
 {
     debug.nospace() << "Gpio(" << gpio->gpioNumber() << ", ";
