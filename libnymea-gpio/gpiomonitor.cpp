@@ -25,7 +25,12 @@
     \brief Monitor for GPIO interrupts.
     \inmodule nymea-gpio
 
-    This class allows to monitor an input GPIO for the interrupts depending on the \l{Gpio:Edge} configuration.
+    This class allows to monitor an input GPIO for the interrupts depending on the edge interrupt configuration.
+
+    This class will start a poll thread in the background. Depending on the Gpio::Edge configuration, the \l{interruptOccured()} signal
+    will be emitted. Default is Gpio::EdgeBoth which means the interrupt will be on rising and falling signal of the Gpio.
+
+    The behavior of the interrupt can also be inverted using the \l{activeLow()} parameter.
 
     \code
         GpioMonitor *monitor = new GpioMonitor(112, this);
@@ -44,13 +49,15 @@
 
 */
 
-/*! \fn void GpioMonitor::interruptOccured(bool value);
+/*!
+    \fn void GpioMonitor::interruptOccured(bool value);
     This signal will be emitted, if an interrupt on the monitored Gpio occured with the new \a value. This event depends on the Gpio::Edge configuration of the Gpio.
 
     \sa edge(), setEdge()
 */
 
-/*! \fn void GpioMonitor::enabledChanged(bool enabled);
+/*!
+    \fn void GpioMonitor::enabledChanged(bool enabled);
     This signal will be emitted when the GpioMonitor \a enabled changed.
 */
 
@@ -76,21 +83,13 @@ GpioMonitor::~GpioMonitor()
     wait(200);
 }
 
-/*! Returns the edge interrupt configuration for this GpioMonitor.
-
-  \sa Gpio::Edge
-
-*/
+/*! Returns the edge interrupt configuration for this GpioMonitor. */
 Gpio::Edge GpioMonitor::edge() const
 {
     return m_edge;
 }
 
-/*! Sets the edge interrupt configuration for this GpioMonitor to the given \a edge.
-
-  \sa Gpio::Edge
-
-*/
+/*! Sets the edge interrupt configuration for this GpioMonitor to the given \a edge. */
 void GpioMonitor::setEdge(Gpio::Edge edge)
 {
     if (m_edge == edge)

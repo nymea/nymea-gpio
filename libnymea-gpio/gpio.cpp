@@ -39,35 +39,41 @@
 
     \code
         Gpio *gpioOut = new Gpio(23, this);
+
         // Export Gpio
         if (!gpioOut->exportGpio()) {
             qWarning() << "Could not export Gpio" << gpioOut->gpioNumber();
             gpioOut->deleteLater();
             return;
         }
+
         // Configure Gpio direction
         if (!gpioOut->setDirection(PiGpio::DirectionOutput)) {
             qWarning() << "Could not set direction of Gpio" << gpioOut->gpioNumber();
             gpioOut->deleteLater();
             return;
         }
+
         gpioOut->setValue(Gpio::ValueHigh)
     \endcode
 
     \code
         Gpio *gpioIn = new Gpio(24, this);
+
         // Export Gpio
         if (!gpioIn->exportGpio()) {
             qWarning() << "Could not export Gpio" << gpioIn->gpioNumber();
             gpioIn->deleteLater();
             return;
         }
+
         // Configure Gpio direction
         if (!gpioIn->setDirection(PiGpio::DirectionInput)) {
             qWarning() << "Could not set direction of Gpio" << gpioIn->gpioNumber();
             gpioIn->deleteLater();
             return;
         }
+
         qDebug() << "Current value" << gpioIn->value();
     \endcode
     \sa GpioMonitor
