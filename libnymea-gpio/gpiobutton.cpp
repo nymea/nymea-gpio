@@ -35,6 +35,8 @@
         button->setName("User button");
         if (!button->enable()) {
             qWarning() << "Could not enable the" << this;
+            button->deleteLater();
+            return;
         }
 
         connect(button, &GpioButton::clicked, this, [this, button](){
