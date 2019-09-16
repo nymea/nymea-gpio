@@ -33,7 +33,7 @@ class GpioButton : public QObject
 {
     Q_OBJECT
 public:
-    explicit GpioButton(int gpioNumber, QObject *parent = nullptr);
+    explicit GpioButton(int gpio, QObject *parent = nullptr);
 
     int gpioNumber() const;
 

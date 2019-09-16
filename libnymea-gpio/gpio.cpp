@@ -24,6 +24,7 @@
     \class Gpio
     \brief Represents a system GPIO in linux systems.
     \inmodule nymea-gpio
+    \ingroup gpio
 
     A "General Purpose Input/Output" (GPIO) is a flexible software-controlled
     digital signal. They are provided from many kinds of chip, and are familiar

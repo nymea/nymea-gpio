@@ -22,9 +22,9 @@ sourceencoding          = UTF-8
 syntaxhighlighting = true
 
 headerdirs = ../libnymea-gpio
-sourcedirs = ../libnymea-gpio
+sourcedirs = ../libnymea-gpio ../docs
 
 headers.fileextensions = "*.h"
-sources.fileextensions = "*.cpp"
+sources.fileextensions = "*.cpp *.qdoc"
 
 Cpp.ignoredirectives = Q_DECLARE_METATYPE Q_DECLARE_LOGGING_CATEGORY Q_LOGGING_CATEGORY Q_ENUM

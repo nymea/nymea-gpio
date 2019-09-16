@@ -24,6 +24,7 @@
     \class GpioButton
     \brief Represents a GPIO Button with some helper methods.
     \inmodule nymea-gpio
+    \ingroup gpio
 
     This class represents a Button based on a GPIO. The class takes care about the \l{clicked()} signal handling, debounces the GPIO signal
     and offers a nice interface for \l{longPressed()} behaviour.

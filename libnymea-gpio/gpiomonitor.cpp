@@ -24,6 +24,7 @@
     \class GpioMonitor
     \brief Monitor for GPIO interrupts.
     \inmodule nymea-gpio
+    \ingroup gpio
 
     This class allows to monitor an input GPIO for the interrupts depending on the edge interrupt configuration.
 
