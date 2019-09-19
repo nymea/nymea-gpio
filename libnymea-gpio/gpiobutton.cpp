@@ -198,14 +198,14 @@ bool GpioButton::enable()
         m_monitor = nullptr;
         return false;
     }
-    connect(m_monitor, &GpioMonitor::interruptOccured, this, &GpioButton::onInterruptOccured, Qt::DirectConnection);
+    connect(m_monitor, &GpioMonitor::interruptOccured, this, &GpioButton::onInterruptOccured);
 
     // Setup timer, if this timer reaches timeout, a long pressed happend
     m_timer = new QTimer(this);
     m_timer->setTimerType(Qt::PreciseTimer);
     m_timer->setSingleShot(!m_repeateLongPressed);
     m_timer->setInterval(m_longPressedTimeout);
-    connect(m_timer, &QTimer::timeout, this, &GpioButton::onTimeout, Qt::DirectConnection);
+    connect(m_timer, &QTimer::timeout, this, &GpioButton::onTimeout);
     return true;
 }
 

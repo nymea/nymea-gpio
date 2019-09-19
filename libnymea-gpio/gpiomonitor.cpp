@@ -157,38 +157,33 @@ void GpioMonitor::setEnabled(bool enabled)
 void GpioMonitor::run()
 {
     // Create GPIO in the thread for initialisation
-    Gpio *inputGpio = new Gpio(m_gpioNumber);
-    if (!inputGpio->exportGpio()) {
+    Gpio inputGpio(m_gpioNumber);
+    if (!inputGpio.exportGpio()) {
         qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
-        delete inputGpio;
         return;
     }
 
-    if (!inputGpio->setDirection(Gpio::DirectionInput)) {
+    if (!inputGpio.setDirection(Gpio::DirectionInput)) {
         qCWarning(dcGpio()) << "Could not enable GPIO monitor.";
-        delete inputGpio;
         return;
     }
 
-    if (!inputGpio->setEdgeInterrupt(m_edge)) {
+    if (!inputGpio.setEdgeInterrupt(m_edge)) {
         qCWarning(dcGpio()) << "Could not set interrupt for the GPIO monitor.";
-        delete inputGpio;
         return;
     }
 
-    if (!inputGpio->setActiveLow(m_activeLow)) {
+    if (!inputGpio.setActiveLow(m_activeLow)) {
         qCWarning(dcGpio()) << "Could not set active low for the GPIO monitor.";
-        delete inputGpio;
         return;
     }
 
 
     // In order to do correctly, use poll (2) according to the kernel documentation
     // https://www.kernel.org/doc/Documentation/gpio/sysfs.txt
-    QFile valueFile(inputGpio->gpioDirectory() + QDir::separator() + "value");
+    QFile valueFile(inputGpio.gpioDirectory() + QDir::separator() + "value");
     if (!valueFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCWarning(dcGpio()) << "Could not open GPIO" << inputGpio << "value file:" << valueFile.errorString();
-        delete inputGpio;
+        qCWarning(dcGpio()) << "Could not open GPIO" << &inputGpio << "value file:" << valueFile.errorString();
         return;
     }
 
@@ -206,7 +201,7 @@ void GpioMonitor::run()
 
         // Poll failed...
         if (rc < 0) {
-            qCWarning(dcGpio()) << "Failed to poll" << inputGpio;
+            qCWarning(dcGpio()) << "Failed to poll" << &inputGpio;
             break;
         }
 
@@ -223,7 +218,7 @@ void GpioMonitor::run()
             QString valueString;
             QTextStream readStream(&valueFile);
             if (!readStream.seek(0)) {
-                qCWarning(dcGpio()) << "Failed to seek value file of" << inputGpio;
+                qCWarning(dcGpio()) << "Failed to seek value file of" << &inputGpio;
                 continue;
             }
 
@@ -239,7 +234,6 @@ void GpioMonitor::run()
 
     // Clean up once done
     valueFile.close();
-    delete inputGpio;
 }
 
 void GpioMonitor::onThreadStarted()
