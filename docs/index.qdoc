@@ -1,0 +1,11 @@
+/*!
+    \page index.html
+    \title nymea-gpio documentation
+
+    The nymea-gpio library allowes to interact in an confortable way with system GPIOs. 
+
+    \chapter Classes
+    \annotatedlist gpio
+
+*/
+
