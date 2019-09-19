@@ -1,3 +1,5 @@
-nymea-gpio (1.0.0) UNRELEASED; urgency=medium
+nymea-gpio (1.0.0) xenial; urgency=medium
+  [ Simon Stürz ]
+  * Initial version
 
- -- Simon Stürz <simon.stuerz@nymea.io>  Wed, 04 Sep 2019 11:50:53 +0200
+ -- Jenkins <jenkins@nymea.io>  Thu, 19 Sep 2019 12:27:41 +0200
