@@ -31,7 +31,7 @@
 #ifndef GPIOBUTTON_H
 #define GPIOBUTTON_H
 
-#include <QTime>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QObject>
 
@@ -67,7 +67,7 @@ private:
     GpioMonitor *m_monitor = nullptr;
     QTimer *m_timer = nullptr;
 
-    QTime m_time;
+    QElapsedTimer m_time;
 
 signals:
     void clicked();
