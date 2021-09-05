@@ -15,5 +15,5 @@ HEADERS += \
 SOURCES += main.cpp \
     application.cpp
 
-target.path = /usr/bin
+target.path = $$[QT_INSTALL_PREFIX]/bin
 INSTALLS += target
