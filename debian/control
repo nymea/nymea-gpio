@@ -12,6 +12,7 @@ Standards-Version: 3.9.7
 Package: libnymea-gpio
 Section: libs
 Architecture: any
+Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Description: Qt 5 based library for GPIO interaction.
@@ -29,19 +30,10 @@ Description: Qt 5 based tool for GPIO interaction.
 Package: libnymea-gpio-dev
 Section: libdevel
 Architecture: any
+Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          pkg-config,
          libnymea-gpio (= ${binary:Version})
 Description: Qt 5 based library for GPIO interaction - development files
   Development files for Qt 5 based GPIO library.
-
-Package: libnymea-gpio-dbg
-Priority: extra
-Architecture: any
-Section: debug
-Depends: ${shlibs:Depends},
-    ${misc:Depends},
-    libnymea-gpio (= ${binary:Version})
-Description: Qt 5 based library for GPIO interaction - debug symbols
-  Debug Symbols for Qt 5 based GPIO library.
