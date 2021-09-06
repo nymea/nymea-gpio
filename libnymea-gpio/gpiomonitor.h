@@ -44,6 +44,8 @@ public:
     explicit GpioMonitor(int gpio, QObject *parent = nullptr);
     ~GpioMonitor() override;
 
+    int gpioNumber() const;
+
     Gpio::Edge edge() const;
     void setEdge(Gpio::Edge edge);
 

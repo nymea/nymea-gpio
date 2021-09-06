@@ -92,6 +92,11 @@ GpioMonitor::~GpioMonitor()
     wait(200);
 }
 
+int GpioMonitor::gpioNumber() const
+{
+    return m_gpioNumber;
+}
+
 /*! Returns the edge interrupt configuration for this GpioMonitor. */
 Gpio::Edge GpioMonitor::edge() const
 {
