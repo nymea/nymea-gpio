@@ -1,3 +1,11 @@
+nymea-gpio (1.0.3) xenial; urgency=medium
+
+  [ Simon Stürz ]
+  * Add monitor gpio number get method
+  * Build gcc 9 and fix install path
+
+ -- Jenkins <jenkins@nymea.io>  Mon, 06 Sep 2021 09:04:38 +0200
+
 nymea-gpio (1.0.2) xenial; urgency=medium
 
   [ Michael Zanetti ]
