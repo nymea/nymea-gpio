@@ -219,8 +219,12 @@ void GpioMonitor::run()
         }
 
         // Check if we should stop the thread
-        QMutexLocker stopLocker(&m_stopMutex);
-        if (m_stop) break;
+        m_stopMutex.lock();
+        if (m_stop) {
+            m_stopMutex.unlock();
+            break;
+        }
+        m_stopMutex.unlock();
 
         // No interrupt occured
         if (rc == 0)
