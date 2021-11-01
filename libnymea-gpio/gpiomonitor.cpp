@@ -147,10 +147,10 @@ void GpioMonitor::setValue(Gpio::Value value)
 
     switch (m_value) {
     case Gpio::ValueLow:
-        emit interruptOccured(false);
+        emit interruptOccurred(false);
         break;
     case Gpio::ValueHigh:
-        emit interruptOccured(true);
+        emit interruptOccurred(true);
         break;
     default:
         break;
