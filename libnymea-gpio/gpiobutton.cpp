@@ -164,7 +164,7 @@ void GpioButton::onTimeout()
     emit longPressed();
 }
 
-void GpioButton::onInterruptOccured(bool value)
+void GpioButton::onInterruptOccurred(bool value)
 {
     if (value) {
         // Pressed
@@ -206,7 +206,7 @@ bool GpioButton::enable()
         m_monitor = nullptr;
         return false;
     }
-    connect(m_monitor, &GpioMonitor::interruptOccured, this, &GpioButton::onInterruptOccured);
+    connect(m_monitor, &GpioMonitor::interruptOccurred, this, &GpioButton::onInterruptOccurred);
 
     // Setup timer, if this timer reaches timeout, a long pressed happend
     m_timer = new QTimer(this);

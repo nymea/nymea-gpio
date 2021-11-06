@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
         });
 
         // Inform about interrupt
-        QObject::connect(monitor, &GpioMonitor::interruptOccured, [gpioNumber](bool value) {
+        QObject::connect(monitor, &GpioMonitor::interruptOccurred, [gpioNumber](bool value) {
             qDebug() << "GPIO" << gpioNumber << "interrupt occured. Current value:" << (value ? "1" : "0");
         });
 

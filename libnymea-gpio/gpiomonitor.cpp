@@ -147,10 +147,10 @@ void GpioMonitor::setValue(Gpio::Value value)
 
     switch (m_value) {
     case Gpio::ValueLow:
-        emit interruptOccured(false);
+        emit interruptOccurred(false);
         break;
     case Gpio::ValueHigh:
-        emit interruptOccured(true);
+        emit interruptOccurred(true);
         break;
     default:
         break;
@@ -219,8 +219,12 @@ void GpioMonitor::run()
         }
 
         // Check if we should stop the thread
-        QMutexLocker stopLocker(&m_stopMutex);
-        if (m_stop) break;
+        m_stopMutex.lock();
+        if (m_stop) {
+            m_stopMutex.unlock();
+            break;
+        }
+        m_stopMutex.unlock();
 
         // No interrupt occured
         if (rc == 0)
@@ -264,7 +268,7 @@ void GpioMonitor::onThreadFinished()
 /*! Returns true, if this GpioMonitor was enabled successfully. */
 bool GpioMonitor::enable()
 {
-    qCDebug(dcGpio()) << "Enable gpio monitor";
+    qCDebug(dcGpio()) << "Enabling gpio monitor";
     if (isRunning()) {
         qCWarning(dcGpio()) << "This GPIO monitor is already running.";
         return true;
@@ -287,7 +291,7 @@ bool GpioMonitor::enable()
 /*! Disables this GpioMonitor. The \l{interruptOccured()} signal will not be emitted any more and the Gpio will be unexported. */
 void GpioMonitor::disable()
 {
-    qCDebug(dcGpio()) << "Disable gpio monitor";
+    qCDebug(dcGpio()) << "Disabling gpio monitor";
     // Stop the thread if not already disabled
     QMutexLocker locker(&m_stopMutex);
     if (m_stop) return;

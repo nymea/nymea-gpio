@@ -76,7 +76,7 @@ protected:
     void run() override;
 
 signals:
-    void interruptOccured(bool value);
+    void interruptOccurred(bool value);
     void enabledChanged(bool enabled);
 
 private slots:
