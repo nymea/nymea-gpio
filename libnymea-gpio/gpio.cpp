@@ -346,9 +346,9 @@ bool Gpio::setActiveLow(bool activeLow)
 
     QTextStream out(&activeLowFile);
     if (activeLow) {
-        out << "0";
-    } else {
         out << "1";
+    } else {
+        out << "0";
     }
 
     activeLowFile.close();
@@ -369,7 +369,7 @@ bool Gpio::activeLow()
     in >> value;
     activeLowFile.close();
 
-    if (value == "0")
+    if (value == "1")
         return true;
 
     return false;

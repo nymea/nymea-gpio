@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     QCommandLineOption monitorOption(QStringList() << "m" << "monitor", "Monitor the given GPIO. The GPIO will automatically configured as input and print any change regarding to the given interrupt behaviour.");
     parser.addOption(monitorOption);
 
-    QCommandLineOption activeLowOption(QStringList() << "a" << "active-low", "Set the GPIO to active low. Allowerd values are: [0, 1]", "VALUE");
+    QCommandLineOption activeLowOption(QStringList() << "l" << "active-low", "Configure the pin as active low (default is active high).");
     parser.addOption(activeLowOption);
 
     parser.process(application);
@@ -102,17 +102,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    bool activeLow = true;
-    if (parser.isSet(activeLowOption)) {
-        if (parser.value(activeLowOption) == "1") {
-            activeLow = false;
-        } else if (parser.value(activeLowOption) == "0") {
-            activeLow = true;
-        } else {
-            qCritical() << "Invalid active low parameter" << parser.value(activeLowOption) << "passed. Valid options are [0, 1].";
-            return EXIT_FAILURE;
-        }
-    }
+    bool activeLow = parser.isSet(activeLowOption);
 
     Gpio::Value value = Gpio::ValueInvalid;
     if (parser.isSet(valueOption)) {
@@ -171,7 +161,7 @@ int main(int argc, char *argv[])
 
         // Inform about interrupt
         QObject::connect(monitor, &GpioMonitor::interruptOccurred, [gpioNumber](bool value) {
-            qDebug() << "GPIO" << gpioNumber << "interrupt occured. Current value:" << (value ? "1" : "0");
+            qDebug() << "GPIO" << gpioNumber << "interrupt occurred. Current value:" << (value ? "1" : "0");
         });
 
         // Enable the monitor
