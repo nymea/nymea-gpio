@@ -1,3 +1,11 @@
+nymea-gpio (1.0.4) xenial; urgency=medium
+
+  [ Michael Zanetti ]
+  * Fix a deadlock and some typos
+  * Fix active low logic
+
+ -- Jenkins <jenkins@nymea.io>  Sun, 07 Nov 2021 00:39:48 +0100
+
 nymea-gpio (1.0.3) xenial; urgency=medium
 
   [ Simon Stürz ]
