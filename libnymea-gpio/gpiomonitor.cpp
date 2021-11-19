@@ -81,8 +81,8 @@ GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
     m_gpioNumber(gpio)
 {
     // Inform about the thread status
-    connect(this, &GpioMonitor::started, this, &GpioMonitor::onThreadStarted, Qt::DirectConnection);
-    connect(this, &GpioMonitor::finished, this, &GpioMonitor::onThreadFinished, Qt::DirectConnection);
+    connect(this, &GpioMonitor::started, this, &GpioMonitor::onThreadStarted);
+    connect(this, &GpioMonitor::finished, this, &GpioMonitor::onThreadFinished);
 }
 
 /*! Destroys and unexports the Gpio. */
@@ -130,7 +130,6 @@ void GpioMonitor::setActiveLow(bool activeLow)
 /*! Returns the current value of the Gpio. */
 Gpio::Value GpioMonitor::value()
 {
-    QMutexLocker valueLocker(&m_valueMutex);
     return m_value;
 }
 
@@ -140,9 +139,8 @@ bool GpioMonitor::enabled() const
     return m_enabled;
 }
 
-void GpioMonitor::setValue(Gpio::Value value)
+void GpioMonitor::onValueChanged(Gpio::Value value)
 {
-    QMutexLocker valueLocker(&m_valueMutex);
     m_value = value;
 
     switch (m_value) {
@@ -241,11 +239,8 @@ void GpioMonitor::run()
 
             // Notify the main thread about the interrupt
             readStream >> valueString;
-            if (valueString == "0") {
-                setValue(Gpio::ValueLow);
-            } else {
-                setValue(Gpio::ValueHigh);
-            }
+            Gpio::Value value = valueString == "1" ? Gpio::ValueHigh : Gpio::ValueLow;
+            QMetaObject::invokeMethod(this, "onValueChanged", Qt::QueuedConnection, Q_ARG(Gpio::Value, value));
         }
     }
 
@@ -280,7 +275,6 @@ bool GpioMonitor::enable()
         return false;
     }
 
-    QMutexLocker locker(&m_stopMutex);
     m_stop = false;
 
     // Everything looks good, lets start the poll thread and inform about the result
@@ -294,6 +288,5 @@ void GpioMonitor::disable()
     qCDebug(dcGpio()) << "Disabling gpio monitor";
     // Stop the thread if not already disabled
     QMutexLocker locker(&m_stopMutex);
-    if (m_stop) return;
     m_stop = true;
 }

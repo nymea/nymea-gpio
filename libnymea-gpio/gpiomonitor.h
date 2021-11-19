@@ -62,14 +62,11 @@ private:
     bool m_activeLow = true;
     bool m_enabled = false;
 
-    // Thread stuff
-    QMutex m_valueMutex;
     Gpio::Value m_value = Gpio::ValueInvalid;
 
     QMutex m_stopMutex;
     bool m_stop = false;
 
-    void setValue(Gpio::Value value);
     void setEnabled(bool enabled);
 
 protected:
@@ -82,6 +79,7 @@ signals:
 private slots:
     void onThreadStarted();
     void onThreadFinished();
+    void onValueChanged(Gpio::Value value);
 
 public slots:
     bool enable();

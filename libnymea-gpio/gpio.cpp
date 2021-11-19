@@ -139,6 +139,7 @@ Gpio::Gpio(int gpio, QObject *parent) :
     m_direction(Gpio::DirectionInvalid),
     m_gpioDirectory(QDir(QString("/sys/class/gpio/gpio%1").arg(QString::number(gpio))))
 {
+    qRegisterMetaType<Gpio::Value>();
 
 }
 
