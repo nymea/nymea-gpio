@@ -1,6 +1,5 @@
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-*
-* Copyright 2013 - 2020, nymea GmbH
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **
+* Copyright 2013 - 2021, nymea GmbH
 * Contact: contact@nymea.io
 *
 * This file is part of nymea.
@@ -31,59 +30,40 @@
 #ifndef GPIOMONITOR_H
 #define GPIOMONITOR_H
 
-#include <QMutex>
-#include <QThread>
 #include <QObject>
+#include <QDebug>
+#include <QSocketNotifier>
+#include <QFile>
 
 #include "gpio.h"
 
-class GpioMonitor : public QThread
+class GpioMonitor : public QObject
 {
     Q_OBJECT
+
 public:
     explicit GpioMonitor(int gpio, QObject *parent = nullptr);
-    ~GpioMonitor() override;
 
-    int gpioNumber() const;
+    bool enable(bool activeLow = false, Gpio::Edge edgeInterrupt = Gpio::EdgeBoth);
+    void disable();
 
-    Gpio::Edge edge() const;
-    void setEdge(Gpio::Edge edge);
+    bool isRunning() const;
+    bool value() const;
 
-    bool activeLow() const;
-    void setActiveLow(bool activeLow);
-
-    Gpio::Value value();
-
-    bool enabled() const;
+    Gpio* gpio();
 
 private:
-    int m_gpioNumber = -1;
-    Gpio::Edge m_edge = Gpio::EdgeBoth;
-    bool m_activeLow = true;
-    bool m_enabled = false;
-
-    Gpio::Value m_value = Gpio::ValueInvalid;
-
-    QMutex m_stopMutex;
-    bool m_stop = false;
-
-    void setEnabled(bool enabled);
-
-protected:
-    void run() override;
+    int m_gpioNumber;
+    Gpio *m_gpio;
+    QSocketNotifier *m_notifier;
+    QFile m_valueFile;
+    bool m_currentValue;
 
 signals:
-    void interruptOccurred(bool value);
-    void enabledChanged(bool enabled);
+    void valueChanged(const bool &value);
 
 private slots:
-    void onThreadStarted();
-    void onThreadFinished();
-    void onValueChanged(Gpio::Value value);
-
-public slots:
-    bool enable();
-    void disable();
+    void readyReady(const int &ready);
 
 };
 

@@ -77,7 +77,7 @@ signals:
 
 private slots:
     void onTimeout();
-    void onInterruptOccurred(bool value);
+    void onValueChanged(bool value);
 
 public slots:
     bool enable();

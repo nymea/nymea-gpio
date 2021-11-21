@@ -151,21 +151,14 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     } else {
         GpioMonitor *monitor = new GpioMonitor(gpioNumber);
-        monitor->setEdge(edge);
-        monitor->setActiveLow(activeLow);
-
-        // Inform about enabled changed
-        QObject::connect(monitor, &GpioMonitor::enabledChanged, [gpioNumber](bool enabled) {
-            qDebug() << "GPIO" << gpioNumber << "monitor" << (enabled ? "enabled" : "disabled");
-        });
 
         // Inform about interrupt
-        QObject::connect(monitor, &GpioMonitor::interruptOccurred, [gpioNumber](bool value) {
-            qDebug() << "GPIO" << gpioNumber << "interrupt occurred. Current value:" << (value ? "1" : "0");
+        QObject::connect(monitor, &GpioMonitor::valueChanged, [gpioNumber](bool value) {
+            qDebug() << "GPIO" << gpioNumber << "value changed:" << (value ? "1" : "0");
         });
 
         // Enable the monitor
-        if (!monitor->enable()) {
+        if (!monitor->enable(activeLow, edge)) {
             qCritical() << "Could not enable GPIO" << gpioNumber << "monitor.";
             return EXIT_FAILURE;
         }
