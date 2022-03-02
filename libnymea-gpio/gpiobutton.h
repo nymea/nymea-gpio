@@ -59,7 +59,7 @@ public:
 
 private:
     int m_gpioNumber;
-    bool m_activeLow = true;
+    bool m_activeLow = false;
     bool m_repeateLongPressed = false;
     int m_longPressedTimeout = 250;
     QString m_name;
