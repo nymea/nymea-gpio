@@ -1,3 +1,9 @@
+nymea-gpio (1.0.0) xenial; urgency=medium
+
+  * 
+
+ -- Jenkins <jenkins@nymea.io>  Thu, 10 Mar 2022 12:34:07 +0100
+
 nymea-gpio (1.0.5) xenial; urgency=medium
 
   [ Michael Zanetti ]
