@@ -1,3 +1,13 @@
+nymea-gpio (1.1.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Default GpioButton to active high
+
+  [ doctorseus ]
+  * Fix license file name.
+
+ -- jenkins <developer@nymea.io>  Fri, 06 May 2022 13:24:26 +0200
+
 nymea-gpio (1.0.0) xenial; urgency=medium
 
   * 
