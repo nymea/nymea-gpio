@@ -19,7 +19,7 @@ Description: Qt 5 based library for GPIO interaction.
   Qt 5 based library for GPIO interaction.
 
 Package: nymea-gpio-tool
-Section: tools
+Section: utils
 Architecture: any
 Depends: ${shlibs:Depends},
          ${misc:Depends},
