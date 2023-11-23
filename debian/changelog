@@ -1,3 +1,10 @@
+nymea-gpio (1.9.0) jammy; urgency=medium
+
+  [ Michael Zanetti ]
+  * Fix package category
+
+ -- jenkins <developer@nymea.io>  Thu, 23 Nov 2023 09:52:29 +0100
+
 nymea-gpio (1.8.4) jammy; urgency=medium
 
 
