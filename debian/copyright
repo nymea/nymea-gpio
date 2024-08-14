@@ -1,6 +1,9 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Author: Simon Stürz <simon.stuerz@nymea.io>
-Download: https://github.com/guh/nymea-gpio
+Upstream-Name: nymea
+Upstream-Contact: nymea GmbH <contact@nymea.io>
+Copyright: 2013-2024, nymea GmbH
+Download: http://www.github.com/nymea/nymea-gpio
+Source: https://github.com/nymea/nymea-gpio.git
 
 License: LGPL-3
  On Debian systems, the complete text of the GNU General
@@ -14,6 +17,14 @@ Files: libnymea-gpio/*
 Copyright: (C) 2019 - 2024 nymea GmbH <contact@nymea.io>
 License: LGPL-3
 
+Files: docs/*
+Copyright: (C) 2019 - 2024 nymea GmbH <contact@nymea.io>
+License: LGPL-3
+
 Files: nymea-gpio-tool/*
+Copyright: (C) 2019 - 2024 nymea GmbH <contact@nymea.io>
+License: GPL-3
+
+Files: debian/*
 Copyright: (C) 2019 - 2024 nymea GmbH <contact@nymea.io>
 License: GPL-3
