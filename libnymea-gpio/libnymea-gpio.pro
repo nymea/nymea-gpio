@@ -3,6 +3,9 @@ include(../nymea-gpio.pri)
 TARGET = nymea-gpio
 TEMPLATE = lib
 
+CONFIG += link_pkgconfig
+PKGCONFIG += libgpiod
+
 HEADERS += \
         gpio.h \
         gpiobutton.h \
