@@ -428,11 +428,32 @@ bool Gpio::setActiveLow(bool activeLow)
     if (m_activeLow == activeLow)
         return true;
 
+    const bool oldActiveLow = m_activeLow;
+    const Gpio::Value oldValue = m_value;
+
+    if (m_direction == DirectionOutput) {
+        bool physicalHigh = (m_value == ValueHigh);
+        if (oldActiveLow)
+            physicalHigh = !physicalHigh;
+
+        bool logicalHigh = physicalHigh;
+        if (activeLow)
+            logicalHigh = !logicalHigh;
+
+        m_value = logicalHigh ? ValueHigh : ValueLow;
+    }
+
     m_activeLow = activeLow;
     if (m_direction == DirectionInvalid)
         return true;
 
-    return requestLine(m_direction, m_edge);
+    if (!requestLine(m_direction, m_edge)) {
+        m_activeLow = oldActiveLow;
+        m_value = oldValue;
+        return false;
+    }
+
+    return true;
 }
 
 /*! Returns true if the logic of this Gpio is inverted (1 = low, 0 = high). */
