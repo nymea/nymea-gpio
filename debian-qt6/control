@@ -8,6 +8,7 @@ Build-Depends: debhelper,
                dpkg-dev,
                qt6-base-dev,
                qt6-base-dev-tools,
+               libgpiod-dev
 
 
 Package: libnymea-gpio

@@ -31,10 +31,10 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include <QDir>
 #include <QDebug>
 #include <QObject>
 #include <QLoggingCategory>
+#include <QDir>
 
 Q_DECLARE_LOGGING_CATEGORY(dcGpio)
 
@@ -88,9 +88,25 @@ public:
     bool setEdgeInterrupt(Gpio::Edge edge);
     Gpio::Edge edgeInterrupt();
 
+    int fileDescriptor() const;
+
 private:
+    bool lookupChip(int gpioNumber, QString &devicePath, int &lineOffset);
+    bool ensureLine();
+    bool requestLine(Gpio::Direction direction, Gpio::Edge edge);
+    void releaseLine();
+
     int m_gpio = 0;
-    Gpio::Direction m_direction = Gpio::DirectionOutput;
+    Gpio::Direction m_direction = Gpio::DirectionInvalid;
+    Gpio::Value m_value = Gpio::ValueLow;
+    Gpio::Edge m_edge = Gpio::EdgeNone;
+    bool m_activeLow = false;
+
+    QString m_chipDevice;
+    int m_lineOffset = -1;
+
+    struct gpiod_chip *m_chip = nullptr;
+    struct gpiod_line *m_line = nullptr;
     QDir m_gpioDirectory;
 
 };

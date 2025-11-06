@@ -73,12 +73,13 @@
 
 #include "gpiomonitor.h"
 
+#include <gpiod.h>
+
 /*! Constructs a \l{GpioMonitor} object with the given \a gpio number and \a parent. */
 GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
     QObject(parent),
     m_gpioNumber(gpio)
 {
-    m_valueFile.setFileName("/sys/class/gpio/gpio" + QString::number(m_gpioNumber) + "/value");
 }
 
 /*! Returns true if this \l{GpioMonitor} could be enabled successfully. With the \a activeLow parameter the values can be inverted.
@@ -97,12 +98,15 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
         return false;
     }
 
-    if (!m_valueFile.open(QFile::ReadOnly)) {
-        qWarning(dcGpio()) << "GpioMonitor: Could not open value file for gpio monitor" << m_gpio->gpioNumber();
+    int fd = m_gpio->fileDescriptor();
+    if (fd < 0) {
+        qWarning(dcGpio()) << "GpioMonitor: Could not obtain event file descriptor for gpio monitor" << m_gpio->gpioNumber();
         return false;
     }
 
-    m_notifier = new QSocketNotifier(m_valueFile.handle(), QSocketNotifier::Exception);
+    m_currentValue = (m_gpio->value() == Gpio::ValueHigh);
+
+    m_notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
     connect(m_notifier, &QSocketNotifier::activated, this, &GpioMonitor::readyReady);
 
     qCDebug(dcGpio()) << "Socket notififier started";
@@ -114,12 +118,10 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
 void GpioMonitor::disable()
 {
     delete m_notifier;
+    m_notifier = nullptr;
+
     delete m_gpio;
-
-    m_notifier = 0;
-    m_gpio = 0;
-
-    m_valueFile.close();
+    m_gpio = nullptr;
 }
 
 /*! Returns true if this \l{GpioMonitor} is running. */
@@ -147,18 +149,20 @@ void GpioMonitor::readyReady(const int &ready)
 {
     Q_UNUSED(ready)
 
-    m_valueFile.seek(0);
-    QByteArray data = m_valueFile.readAll();
+    if (!m_gpio)
+        return;
 
-    bool value = false;
-    if (data[0] == '1') {
-        value = true;
-    } else if (data[0] == '0') {
-        value = false;
-    } else {
+    struct gpiod_line_event event;
+    if (gpiod_line_event_read_fd(m_gpio->fileDescriptor(), &event) < 0) {
+        qCWarning(dcGpio()) << "GpioMonitor: Failed to read gpio event for" << m_gpio->gpioNumber();
         return;
     }
 
+    Gpio::Value gpioValue = m_gpio->value();
+    if (gpioValue == Gpio::ValueInvalid)
+        return;
+
+    bool value = (gpioValue == Gpio::ValueHigh);
     m_currentValue = value;
     emit valueChanged(value);
 }

@@ -33,7 +33,6 @@
 #include <QObject>
 #include <QDebug>
 #include <QSocketNotifier>
-#include <QFile>
 
 #include "gpio.h"
 
@@ -54,10 +53,9 @@ public:
 
 private:
     int m_gpioNumber;
-    Gpio *m_gpio;
-    QSocketNotifier *m_notifier;
-    QFile m_valueFile;
-    bool m_currentValue;
+    Gpio *m_gpio = nullptr;
+    QSocketNotifier *m_notifier = nullptr;
+    bool m_currentValue = false;
 
 signals:
     void valueChanged(const bool &value);
