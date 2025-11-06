@@ -36,7 +36,7 @@
 int main(int argc, char *argv[])
 {
     Application application(argc, argv);
-    application.setOrganizationName("guh");
+    application.setOrganizationName("nymea");
     application.setApplicationName("nymea-gpio-tool");
     application.setApplicationVersion(VERSION_STRING);
 
