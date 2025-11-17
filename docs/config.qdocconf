@@ -5,9 +5,9 @@ description = nymea-gpio documentation
 
 dita.metadata.default.author      = Simon Stürz
 dita.metadata.default.permissions = all
-dita.metadata.default.publisher   = guh GmbH
-dita.metadata.default.copyryear = 2019
-dita.metadata.default.copyrholder = Simon Stürz
+dita.metadata.default.publisher   = chargebyte austria GmbH
+dita.metadata.default.copyryear = 2013-2025
+dita.metadata.default.copyrholder = nymea GmbH; chargebyte austria GmbH
 dita.metadata.default.audience = programmer
 
 outputdir = html
