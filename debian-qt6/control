@@ -1,7 +1,7 @@
 Source: nymea-gpio
 Section: utils
 Priority: optional
-Maintainer: nymea GmbH <developer@nymea.io>
+Maintainer: chargebyte austria GmbH <contact@nymea.io>
 Standards-Version: 4.7.2
 Vcs-Git: https://github.com/nymea/nymea-gpio.git
 Build-Depends: debhelper,
