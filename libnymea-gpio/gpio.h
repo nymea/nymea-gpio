@@ -38,7 +38,13 @@ Q_DECLARE_LOGGING_CATEGORY(dcGpio)
 class GpioMonitor;
 
 struct gpiod_chip;
+#ifndef NYMEA_GPIO_USE_SYSFS
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+struct gpiod_line_request;
+#else
 struct gpiod_line;
+#endif
+#endif
 
 class Gpio : public QObject
 {
@@ -103,7 +109,11 @@ private:
     QString m_chipName;
     unsigned int m_lineOffset = 0;
     gpiod_chip *m_chip = nullptr;
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    gpiod_line_request *m_request = nullptr;
+#else
     gpiod_line *m_line = nullptr;
+#endif
     bool m_activeLow = false;
     Gpio::Edge m_edge = Gpio::EdgeNone;
 #endif

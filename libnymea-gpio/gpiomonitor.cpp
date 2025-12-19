@@ -114,6 +114,14 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
         return false;
     }
 
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    m_eventBuffer = gpiod_edge_event_buffer_new(1);
+    if (!m_eventBuffer) {
+        qCWarning(dcGpio()) << "GpioMonitor: Could not allocate edge event buffer for GPIO" << m_gpio->gpioNumber();
+        return false;
+    }
+#endif
+
     m_notifier = new QSocketNotifier(m_eventFd, QSocketNotifier::Read);
     connect(m_notifier, &QSocketNotifier::activated, this, &GpioMonitor::readyReady);
 
@@ -143,6 +151,12 @@ void GpioMonitor::disable()
     m_valueFile.close();
 #else
     m_eventFd = -1;
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (m_eventBuffer) {
+        gpiod_edge_event_buffer_free(m_eventBuffer);
+        m_eventBuffer = nullptr;
+    }
+#endif
 #endif
 }
 
@@ -190,11 +204,22 @@ void GpioMonitor::readyReady(const int &ready)
     if (m_eventFd < 0)
         return;
 
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (!m_gpio || !m_gpio->m_request || !m_eventBuffer)
+        return;
+
+    const int eventsRead = gpiod_line_request_read_edge_events(m_gpio->m_request, m_eventBuffer, 1);
+    if (eventsRead < 0) {
+        qCWarning(dcGpio()) << "GpioMonitor: Could not read GPIO edge events:" << strerror(errno);
+        return;
+    }
+#else
     gpiod_line_event event;
     if (gpiod_line_event_read_fd(m_eventFd, &event) < 0) {
         qCWarning(dcGpio()) << "GpioMonitor: Could not read GPIO event:" << strerror(errno);
         return;
     }
+#endif
 
     const Gpio::Value current = m_gpio ? m_gpio->value() : Gpio::ValueInvalid;
     if (current == Gpio::ValueInvalid)

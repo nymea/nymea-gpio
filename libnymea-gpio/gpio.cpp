@@ -182,30 +182,49 @@ bool resolveLineFromSysfs(int gpioNumber, QString *chipName, unsigned int *offse
     return false;
 }
 
+unsigned int chipNumLines(gpiod_chip *chip)
+{
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    gpiod_chip_info *info = gpiod_chip_get_info(chip);
+    if (!info)
+        return 0;
+
+    const unsigned int numLines = gpiod_chip_info_get_num_lines(info);
+    gpiod_chip_info_free(info);
+    return numLines;
+#else
+    return gpiod_chip_num_lines(chip);
+#endif
+}
+
 bool resolveLineSequential(int gpioNumber, QString *chipName, unsigned int *offset)
 {
     if (gpioNumber < 0)
         return false;
 
-    gpiod_chip_iter *iter = gpiod_chip_iter_new();
-    if (!iter)
-        return false;
-
-    gpiod_chip *chip = nullptr;
+    QDir devDir("/dev");
+    const QStringList entries = devDir.entryList(QStringList() << "gpiochip*", QDir::System | QDir::Files, QDir::Name);
     unsigned int base = 0;
-    gpiod_foreach_chip(iter, chip)
-    {
-        const unsigned int numLines = gpiod_chip_num_lines(chip);
+    for (const QString &entry : entries) {
+        const QString chipPath = devDir.filePath(entry);
+        gpiod_chip *chip = gpiod_chip_open(chipPath.toLatin1().constData());
+        if (!chip)
+            continue;
+
+        const unsigned int numLines = chipNumLines(chip);
+        gpiod_chip_close(chip);
+
+        if (numLines == 0)
+            continue;
+
         if (static_cast<unsigned int>(gpioNumber) < base + numLines) {
-            *chipName = QString::fromLatin1(gpiod_chip_name(chip));
+            *chipName = entry;
             *offset = static_cast<unsigned int>(gpioNumber) - base;
-            gpiod_chip_iter_free(iter);
             return true;
         }
         base += numLines;
     }
 
-    gpiod_chip_iter_free(iter);
     return false;
 }
 
@@ -236,14 +255,17 @@ bool Gpio::isAvailable()
 #ifdef NYMEA_GPIO_USE_SYSFS
     return QFile("/sys/class/gpio/export").exists();
 #else
-    gpiod_chip_iter *iter = gpiod_chip_iter_new();
-    if (!iter)
-        return false;
-
-    gpiod_chip *chip = gpiod_chip_iter_next(iter);
-    const bool available = chip != nullptr;
-    gpiod_chip_iter_free(iter);
-    return available;
+    QDir devDir("/dev");
+    const QStringList entries = devDir.entryList(QStringList() << "gpiochip*", QDir::System | QDir::Files, QDir::Name);
+    for (const QString &entry : entries) {
+        const QString chipPath = devDir.filePath(entry);
+        gpiod_chip *chip = gpiod_chip_open(chipPath.toLatin1().constData());
+        if (chip) {
+            gpiod_chip_close(chip);
+            return true;
+        }
+    }
+    return false;
 #endif
 }
 
@@ -289,7 +311,13 @@ bool Gpio::exportGpio()
     exportFile.close();
     return true;
 #else
-    if (m_line && m_chip) {
+    if (
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+        m_chip
+#else
+        m_line && m_chip
+#endif
+    ) {
         qCDebug(dcGpio()) << "GPIO" << m_gpio << "already opened.";
         return true;
     }
@@ -299,13 +327,14 @@ bool Gpio::exportGpio()
         return false;
     }
 
-    const QByteArray chipName = m_chipName.toLatin1();
-    m_chip = gpiod_chip_open_by_name(chipName.constData());
+    const QString chipPath = QString("/dev/%1").arg(m_chipName);
+    m_chip = gpiod_chip_open(chipPath.toLatin1().constData());
     if (!m_chip) {
-        qCWarning(dcGpio()) << "Could not open gpiochip" << m_chipName << ":" << strerror(errno);
+        qCWarning(dcGpio()) << "Could not open gpiochip" << chipPath << ":" << strerror(errno);
         return false;
     }
 
+#if !defined(NYMEA_GPIO_LIBGPIOD_V2)
     m_line = gpiod_chip_get_line(m_chip, m_lineOffset);
     if (!m_line) {
         qCWarning(dcGpio()) << "Could not get line" << m_lineOffset << "from" << m_chipName << ":" << strerror(errno);
@@ -313,6 +342,7 @@ bool Gpio::exportGpio()
         m_chip = nullptr;
         return false;
     }
+#endif
 
     return true;
 #endif
@@ -334,10 +364,21 @@ bool Gpio::unexportGpio()
     unexportFile.close();
     return true;
 #else
-    if (m_line) {
+    if (
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+        m_request
+#else
+        m_line
+#endif
+    ) {
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+        gpiod_line_request_release(m_request);
+        m_request = nullptr;
+#else
         if (gpiod_line_is_requested(m_line))
             gpiod_line_release(m_line);
         m_line = nullptr;
+#endif
     }
 
     if (m_chip) {
@@ -384,17 +425,31 @@ bool Gpio::setDirection(Gpio::Direction direction)
     directionFile.close();
     return true;
 #else
-    if (!m_line && !exportGpio()) {
+    if (
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+        !m_chip
+#else
+        !m_line
+#endif
+        && !exportGpio()) {
         qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not available.";
         return false;
     }
 
     int outputValue = 0;
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (m_request) {
+        const Gpio::Value currentValue = value();
+        if (currentValue != Gpio::ValueInvalid)
+            outputValue = logicalToPhysicalValue(currentValue);
+    }
+#else
     if (m_line && gpiod_line_is_requested(m_line)) {
         const int current = gpiod_line_get_value(m_line);
         if (current >= 0)
             outputValue = current;
     }
+#endif
 
     if (!requestLine(direction, EdgeNone, outputValue)) {
         qCWarning(dcGpio()) << "Could not request GPIO" << m_gpio << "direction" << direction << ":" << strerror(errno);
@@ -482,6 +537,23 @@ bool Gpio::setValue(Gpio::Value value)
     valueFile.close();
     return true;
 #else
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (!m_request) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
+        return false;
+    }
+
+    const int physicalValue = logicalToPhysicalValue(value);
+    if (physicalValue < 0)
+        return false;
+
+    if (gpiod_line_request_set_value(m_request, m_lineOffset, physicalValue ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE) < 0) {
+        qCWarning(dcGpio()) << "Could not set GPIO" << m_gpio << "value:" << strerror(errno);
+        return false;
+    }
+
+    return true;
+#else
     if (!m_line || !gpiod_line_is_requested(m_line)) {
         qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
         return false;
@@ -497,6 +569,7 @@ bool Gpio::setValue(Gpio::Value value)
     }
 
     return true;
+#endif
 #endif
 }
 
@@ -523,6 +596,21 @@ Gpio::Value Gpio::value()
 
     return Gpio::ValueInvalid;
 #else
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (!m_request) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
+        return Gpio::ValueInvalid;
+    }
+
+    const gpiod_line_value value = gpiod_line_request_get_value(m_request, m_lineOffset);
+    if (value == GPIOD_LINE_VALUE_ERROR) {
+        qCWarning(dcGpio()) << "Could not read GPIO" << m_gpio << "value:" << strerror(errno);
+        return Gpio::ValueInvalid;
+    }
+
+    const int physicalValue = (value == GPIOD_LINE_VALUE_ACTIVE) ? 1 : 0;
+    return physicalToLogicalValue(physicalValue);
+#else
     if (!m_line || !gpiod_line_is_requested(m_line)) {
         qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
         return Gpio::ValueInvalid;
@@ -535,6 +623,7 @@ Gpio::Value Gpio::value()
     }
 
     return physicalToLogicalValue(value);
+#endif
 #endif
 }
 
@@ -624,7 +713,13 @@ bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
     edgeFile.close();
     return true;
 #else
-    if (!m_line && !exportGpio()) {
+    if (
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+        !m_chip
+#else
+        !m_line
+#endif
+        && !exportGpio()) {
         qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not available.";
         return false;
     }
@@ -688,6 +783,91 @@ bool Gpio::resolveLine()
 
 bool Gpio::requestLine(Gpio::Direction direction, Gpio::Edge edge, int outputValue)
 {
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (!m_chip)
+        return false;
+
+    if (m_request) {
+        gpiod_line_request_release(m_request);
+        m_request = nullptr;
+    }
+
+    gpiod_line_settings *settings = gpiod_line_settings_new();
+    if (!settings)
+        return false;
+
+    gpiod_line_config *lineConfig = gpiod_line_config_new();
+    if (!lineConfig) {
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    gpiod_request_config *requestConfig = gpiod_request_config_new();
+    if (!requestConfig) {
+        gpiod_line_config_free(lineConfig);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    gpiod_request_config_set_consumer(requestConfig, kGpioConsumer);
+
+    if (gpiod_line_settings_set_direction(settings, direction == DirectionOutput ? GPIOD_LINE_DIRECTION_OUTPUT : GPIOD_LINE_DIRECTION_INPUT) < 0) {
+        gpiod_request_config_free(requestConfig);
+        gpiod_line_config_free(lineConfig);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    if (direction == DirectionOutput) {
+        if (gpiod_line_settings_set_output_value(settings, outputValue ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE) < 0) {
+            gpiod_request_config_free(requestConfig);
+            gpiod_line_config_free(lineConfig);
+            gpiod_line_settings_free(settings);
+            return false;
+        }
+    } else {
+        enum gpiod_line_edge gpiodEdge = GPIOD_LINE_EDGE_NONE;
+        switch (edge) {
+        case EdgeRising:
+            gpiodEdge = GPIOD_LINE_EDGE_RISING;
+            break;
+        case EdgeFalling:
+            gpiodEdge = GPIOD_LINE_EDGE_FALLING;
+            break;
+        case EdgeBoth:
+            gpiodEdge = GPIOD_LINE_EDGE_BOTH;
+            break;
+        case EdgeNone:
+            gpiodEdge = GPIOD_LINE_EDGE_NONE;
+            break;
+        }
+        if (gpiod_line_settings_set_edge_detection(settings, gpiodEdge) < 0) {
+            gpiod_request_config_free(requestConfig);
+            gpiod_line_config_free(lineConfig);
+            gpiod_line_settings_free(settings);
+            return false;
+        }
+    }
+
+    const unsigned int offsets[] = {m_lineOffset};
+    if (gpiod_line_config_add_line_settings(lineConfig, offsets, 1, settings) < 0) {
+        gpiod_request_config_free(requestConfig);
+        gpiod_line_config_free(lineConfig);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    m_request = gpiod_chip_request_lines(m_chip, requestConfig, lineConfig);
+
+    gpiod_request_config_free(requestConfig);
+    gpiod_line_config_free(lineConfig);
+    gpiod_line_settings_free(settings);
+
+    if (!m_request)
+        return false;
+
+    return true;
+#else
     if (!m_line)
         return false;
 
@@ -715,6 +895,7 @@ bool Gpio::requestLine(Gpio::Direction direction, Gpio::Edge edge, int outputVal
     }
 
     return ret == 0;
+#endif
 }
 
 int Gpio::logicalToPhysicalValue(Gpio::Value value) const
@@ -741,10 +922,17 @@ Gpio::Value Gpio::physicalToLogicalValue(int value) const
 
 int Gpio::eventFd() const
 {
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    if (!m_request)
+        return -1;
+
+    return gpiod_line_request_get_fd(m_request);
+#else
     if (!m_line)
         return -1;
 
     return gpiod_line_event_get_fd(m_line);
+#endif
 }
 #endif
 

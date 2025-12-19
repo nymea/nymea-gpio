@@ -58,6 +58,9 @@ private:
     bool m_currentValue;
 #ifndef NYMEA_GPIO_USE_SYSFS
     int m_eventFd = -1;
+#if defined(NYMEA_GPIO_LIBGPIOD_V2)
+    struct gpiod_edge_event_buffer *m_eventBuffer = nullptr;
+#endif
 #endif
 
 signals:
