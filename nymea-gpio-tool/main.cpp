@@ -42,19 +42,23 @@ int main(int argc, char *argv[])
                                              "Copyright (C) 2013 - 2024 nymea GmbH\n"
                                              "Copyright (C) 2024 - 2025 chargebyte austria GmbH\n\n"
                                              "Released under the GNU General Public License v3.0 or (at your option) any later version.\n")
-                                             .arg(application.applicationVersion());
+                                         .arg(application.applicationVersion());
     parser.setApplicationDescription(applicationDescription);
 
     QCommandLineOption gpioOption(QStringList() << "g" << "gpio", "The gpio number to use.", "GPIO");
     parser.addOption(gpioOption);
 
-    QCommandLineOption interruptOption(QStringList() << "i" << "interrupt", "Configure the input GPIO to the given interrupt. This option is only allowed for monitoring. Allowerd interrupts are: [rising, falling, both, none]. Default is \"both\".", "INTERRUPT");
+    QCommandLineOption interruptOption(
+        QStringList() << "i" << "interrupt",
+        "Configure the input GPIO to the given interrupt. This option is only allowed for monitoring. Allowerd interrupts are: [rising, falling, both, none]. Default is \"both\".",
+        "INTERRUPT");
     parser.addOption(interruptOption);
 
     QCommandLineOption valueOption(QStringList() << "s" << "set-value", "Configure the GPIO to output and set the value. Allowerd values are: [0, 1].", "VALUE");
     parser.addOption(valueOption);
 
-    QCommandLineOption monitorOption(QStringList() << "m" << "monitor", "Monitor the given GPIO. The GPIO will automatically configured as input and print any change regarding to the given interrupt behaviour.");
+    QCommandLineOption monitorOption(QStringList() << "m" << "monitor",
+                                     "Monitor the given GPIO. The GPIO will automatically configured as input and print any change regarding to the given interrupt behaviour.");
     parser.addOption(monitorOption);
 
     QCommandLineOption activeLowOption(QStringList() << "l" << "active-low", "Configure the pin as active low (default is active high).");
@@ -149,9 +153,7 @@ int main(int argc, char *argv[])
         GpioMonitor *monitor = new GpioMonitor(gpioNumber);
 
         // Inform about interrupt
-        QObject::connect(monitor, &GpioMonitor::valueChanged, [gpioNumber](bool value) {
-            qDebug() << "GPIO" << gpioNumber << "value changed:" << (value ? "1" : "0");
-        });
+        QObject::connect(monitor, &GpioMonitor::valueChanged, [gpioNumber](bool value) { qDebug() << "GPIO" << gpioNumber << "value changed:" << (value ? "1" : "0"); });
 
         // Enable the monitor
         if (!monitor->enable(activeLow, edge)) {
@@ -160,9 +162,7 @@ int main(int argc, char *argv[])
         }
 
         // Clean up the gpio once done
-        QObject::connect(&application, &Application::aboutToQuit, [monitor](){
-            delete monitor;
-        });
+        QObject::connect(&application, &Application::aboutToQuit, [monitor]() { delete monitor; });
     }
 
     return application.exec();

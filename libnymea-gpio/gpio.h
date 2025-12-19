@@ -28,10 +28,10 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include <QDir>
 #include <QDebug>
-#include <QObject>
+#include <QDir>
 #include <QLoggingCategory>
+#include <QObject>
 
 Q_DECLARE_LOGGING_CATEGORY(dcGpio)
 
@@ -89,9 +89,8 @@ private:
     int m_gpio = 0;
     Gpio::Direction m_direction = Gpio::DirectionOutput;
     QDir m_gpioDirectory;
-
 };
 
-QDebug operator<< (QDebug debug, Gpio *gpio);
+QDebug operator<<(QDebug debug, Gpio *gpio);
 
 #endif // GPIO_H

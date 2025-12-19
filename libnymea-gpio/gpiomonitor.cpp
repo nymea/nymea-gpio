@@ -71,9 +71,9 @@
 #include "gpiomonitor.h"
 
 /*! Constructs a \l{GpioMonitor} object with the given \a gpio number and \a parent. */
-GpioMonitor::GpioMonitor(int gpio, QObject *parent) :
-    QObject(parent),
-    m_gpioNumber(gpio)
+GpioMonitor::GpioMonitor(int gpio, QObject *parent)
+    : QObject(parent)
+    , m_gpioNumber(gpio)
 {
     m_valueFile.setFileName("/sys/class/gpio/gpio" + QString::number(m_gpioNumber) + "/value");
 }
@@ -86,10 +86,7 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
         return false;
 
     m_gpio = new Gpio(m_gpioNumber, this);
-    if (!m_gpio->exportGpio() ||
-            !m_gpio->setDirection(Gpio::DirectionInput) ||
-            !m_gpio->setActiveLow(activeLow) ||
-            !m_gpio->setEdgeInterrupt(edgeInterrupt)) {
+    if (!m_gpio->exportGpio() || !m_gpio->setDirection(Gpio::DirectionInput) || !m_gpio->setActiveLow(activeLow) || !m_gpio->setEdgeInterrupt(edgeInterrupt)) {
         qCWarning(dcGpio()) << "GpioMonitor: Error while initializing GPIO" << m_gpio->gpioNumber();
         return false;
     }

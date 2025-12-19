@@ -85,7 +85,6 @@
     \sa GpioMonitor
 */
 
-
 /*!
     \enum Gpio::Direction
     This enum type specifies the dirction a Gpio.
@@ -130,14 +129,13 @@
 Q_LOGGING_CATEGORY(dcGpio, "Gpio")
 
 /*! Constructs a Gpio object to represent a GPIO with the given \a gpio number and \a parent. */
-Gpio::Gpio(int gpio, QObject *parent) :
-    QObject(parent),
-    m_gpio(gpio),
-    m_direction(Gpio::DirectionInvalid),
-    m_gpioDirectory(QDir(QString("/sys/class/gpio/gpio%1").arg(QString::number(gpio))))
+Gpio::Gpio(int gpio, QObject *parent)
+    : QObject(parent)
+    , m_gpio(gpio)
+    , m_direction(Gpio::DirectionInvalid)
+    , m_gpioDirectory(QDir(QString("/sys/class/gpio/gpio%1").arg(QString::number(gpio))))
 {
     qRegisterMetaType<Gpio::Value>();
-
 }
 
 /*! Destroys and unexports the Gpio. */
@@ -376,7 +374,6 @@ bool Gpio::activeLow()
 /*! Returns true if the \a edge of this GPIO could be set correctly. The \a edge parameter specifies, when an interrupt occurs. */
 bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
 {
-
     if (m_direction == Gpio::DirectionOutput) {
         qCWarning(dcGpio()) << "Could not set edge interrupt, GPIO is configured as an output.";
         return false;
@@ -435,7 +432,6 @@ Gpio::Edge Gpio::edgeInterrupt()
 
     return Gpio::EdgeNone;
 }
-
 
 /*! Prints the given \a gpio to \a debug. */
 QDebug operator<<(QDebug debug, Gpio *gpio)
