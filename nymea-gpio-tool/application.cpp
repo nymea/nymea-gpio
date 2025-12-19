@@ -24,12 +24,12 @@
 
 #include "application.h"
 
-#include <QDebug>
 #include <signal.h>
+#include <QDebug>
 
-static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vector<int>& ignoreSignals = std::vector<int>())
+static void catchUnixSignals(const std::vector<int> &quitSignals, const std::vector<int> &ignoreSignals = std::vector<int>())
 {
-    auto handler = [](int sig) ->void {
+    auto handler = [](int sig) -> void {
         switch (sig) {
         case SIGQUIT:
             qDebug() << "Cought SIGQUIT quit signal...";
@@ -60,11 +60,10 @@ static void catchUnixSignals(const std::vector<int>& quitSignals, const std::vec
 
     for (int sig : quitSignals)
         signal(sig, handler);
-
 }
 
-Application::Application(int &argc, char **argv) :
-    QCoreApplication(argc, argv)
+Application::Application(int &argc, char **argv)
+    : QCoreApplication(argc, argv)
 {
     catchUnixSignals({SIGQUIT, SIGINT, SIGTERM, SIGHUP, SIGSEGV});
 }

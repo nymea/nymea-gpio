@@ -28,10 +28,10 @@
 #ifndef GPIOMONITOR_H
 #define GPIOMONITOR_H
 
-#include <QObject>
 #include <QDebug>
-#include <QSocketNotifier>
 #include <QFile>
+#include <QObject>
+#include <QSocketNotifier>
 
 #include "gpio.h"
 
@@ -48,7 +48,7 @@ public:
     bool isRunning() const;
     bool value() const;
 
-    Gpio* gpio();
+    Gpio *gpio();
 
 private:
     int m_gpioNumber;
@@ -62,7 +62,6 @@ signals:
 
 private slots:
     void readyReady(const int &ready);
-
 };
 
 #endif // GPIOMONITOR_H

@@ -79,12 +79,10 @@
 #include "gpiomonitor.h"
 
 /*! Constructs a \l{GpioButton} object with the given \a gpio number and \a parent. */
-GpioButton::GpioButton(int gpio, QObject *parent) :
-    QObject(parent),
-    m_gpioNumber(gpio)
-{
-
-}
+GpioButton::GpioButton(int gpio, QObject *parent)
+    : QObject(parent)
+    , m_gpioNumber(gpio)
+{}
 
 /*! Returns the gpio number for this GpioButton. */
 int GpioButton::gpioNumber() const

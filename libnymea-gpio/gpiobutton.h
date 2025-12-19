@@ -29,8 +29,8 @@
 #define GPIOBUTTON_H
 
 #include <QElapsedTimer>
-#include <QTimer>
 #include <QObject>
+#include <QTimer>
 
 class GpioMonitor;
 
@@ -79,10 +79,8 @@ private slots:
 public slots:
     bool enable();
     void disable();
-
 };
 
-QDebug operator<< (QDebug debug, GpioButton *gpioButton);
-
+QDebug operator<<(QDebug debug, GpioButton *gpioButton);
 
 #endif // GPIOBUTTON_H
