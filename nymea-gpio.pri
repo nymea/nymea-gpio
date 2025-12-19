@@ -11,6 +11,20 @@ greaterThan(QT_MAJOR_VERSION, 5) {
     DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x050F00
 }
 
+contains(CONFIG, nymea_gpio_sysfs) {
+    message("Building with legacy sysfs GPIO backend")
+    DEFINES += NYMEA_GPIO_USE_SYSFS
+} else {
+    LIBGPIOD_VERSION = $$system(pkg-config --modversion libgpiod)
+    message("Building with libgpiod GPIO backend $${LIBGPIOD_VERSION}")
+    contains(LIBGPIOD_VERSION, ^2\\..*) {
+        message("Building with libgpiod API V2 support")
+        DEFINES += NYMEA_GPIO_LIBGPIOD_V2
+    } else {
+        message("Building with libgpiod API V1 support")
+    }
+}
+
 QMAKE_CXXFLAGS += -Werror -g
 
 gcc {

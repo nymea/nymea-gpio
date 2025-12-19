@@ -13,6 +13,12 @@ SOURCES += \
         gpiobutton.cpp \
         gpiomonitor.cpp
 
+!contains(CONFIG, nymea_gpio_sysfs) {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libgpiod
+    QMAKE_PKGCONFIG_REQUIRES += libgpiod
+}
+
 target.path = $$[QT_INSTALL_LIBS]
 INSTALLS += target
 
@@ -34,3 +40,5 @@ QMAKE_PKGCONFIG_LIBDIR = $$target.path
 QMAKE_PKGCONFIG_VERSION = $$VERSION_STRING
 QMAKE_PKGCONFIG_FILE = nymea-gpio
 QMAKE_PKGCONFIG_DESTDIR = pkgconfig
+contains(DEFINES, NYMEA_GPIO_USE_SYSFS): QMAKE_PKGCONFIG_CFLAGS += -DNYMEA_GPIO_USE_SYSFS
+contains(DEFINES, NYMEA_GPIO_LIBGPIOD_V2): QMAKE_PKGCONFIG_CFLAGS += -DNYMEA_GPIO_LIBGPIOD_V2
