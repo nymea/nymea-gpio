@@ -126,14 +126,100 @@
 
 #include "gpio.h"
 
+#include <QFile>
+#include <QTextStream>
+
+#ifndef NYMEA_GPIO_USE_SYSFS
+#include <errno.h>
+#include <gpiod.h>
+#include <string.h>
+#endif
+
 Q_LOGGING_CATEGORY(dcGpio, "Gpio")
+
+#ifndef NYMEA_GPIO_USE_SYSFS
+namespace {
+
+constexpr const char *kGpioConsumer = "nymea-gpio";
+
+bool readIntFile(const QString &path, int *value)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    const QByteArray data = file.readAll();
+    bool ok = false;
+    const int parsed = QString::fromLatin1(data).trimmed().toInt(&ok);
+    if (!ok)
+        return false;
+
+    *value = parsed;
+    return true;
+}
+
+bool resolveLineFromSysfs(int gpioNumber, QString *chipName, unsigned int *offset)
+{
+    QDir gpioDir("/sys/class/gpio");
+    if (!gpioDir.exists())
+        return false;
+
+    const QStringList entries = gpioDir.entryList(QStringList() << "gpiochip*", QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &entry : entries) {
+        int base = 0;
+        int ngpio = 0;
+        if (!readIntFile(gpioDir.filePath(entry + "/base"), &base) || !readIntFile(gpioDir.filePath(entry + "/ngpio"), &ngpio)) {
+            continue;
+        }
+
+        if (gpioNumber >= base && gpioNumber < base + ngpio) {
+            *chipName = entry;
+            *offset = static_cast<unsigned int>(gpioNumber - base);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool resolveLineSequential(int gpioNumber, QString *chipName, unsigned int *offset)
+{
+    if (gpioNumber < 0)
+        return false;
+
+    gpiod_chip_iter *iter = gpiod_chip_iter_new();
+    if (!iter)
+        return false;
+
+    gpiod_chip *chip = nullptr;
+    unsigned int base = 0;
+    gpiod_foreach_chip(iter, chip)
+    {
+        const unsigned int numLines = gpiod_chip_num_lines(chip);
+        if (static_cast<unsigned int>(gpioNumber) < base + numLines) {
+            *chipName = QString::fromLatin1(gpiod_chip_name(chip));
+            *offset = static_cast<unsigned int>(gpioNumber) - base;
+            gpiod_chip_iter_free(iter);
+            return true;
+        }
+        base += numLines;
+    }
+
+    gpiod_chip_iter_free(iter);
+    return false;
+}
+
+} // namespace
+#endif
 
 /*! Constructs a Gpio object to represent a GPIO with the given \a gpio number and \a parent. */
 Gpio::Gpio(int gpio, QObject *parent)
     : QObject(parent)
     , m_gpio(gpio)
     , m_direction(Gpio::DirectionInvalid)
+#ifdef NYMEA_GPIO_USE_SYSFS
     , m_gpioDirectory(QDir(QString("/sys/class/gpio/gpio%1").arg(QString::number(gpio))))
+#endif
 {
     qRegisterMetaType<Gpio::Value>();
 }
@@ -144,16 +230,33 @@ Gpio::~Gpio()
     unexportGpio();
 }
 
-/*! Returns true if the directories \tt {/sys/class/gpio} and \tt {/sys/class/gpio/export} do exist. */
+/*! Returns true if GPIO support is available on this system. */
 bool Gpio::isAvailable()
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     return QFile("/sys/class/gpio/export").exists();
+#else
+    gpiod_chip_iter *iter = gpiod_chip_iter_new();
+    if (!iter)
+        return false;
+
+    gpiod_chip *chip = gpiod_chip_iter_next(iter);
+    const bool available = chip != nullptr;
+    gpiod_chip_iter_free(iter);
+    return available;
+#endif
 }
 
-/*! Returns the directory \tt {/sys/class/gpio/gpio<number>} of this Gpio. */
+/*! Returns the GPIO directory for sysfs builds or the gpiochip device path for libgpiod builds. */
 QString Gpio::gpioDirectory() const
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     return m_gpioDirectory.canonicalPath();
+#else
+    if (m_chipName.isEmpty())
+        return QString();
+    return QString("/dev/%1").arg(m_chipName);
+#endif
 }
 
 /*! Returns the number of this Gpio.
@@ -164,10 +267,11 @@ int Gpio::gpioNumber() const
     return m_gpio;
 }
 
-/*! Returns true if this Gpio could be exported in the system file \tt {/sys/class/gpio/export}. If this Gpio is already exported, this function will return true. */
+/*! Returns true if this Gpio could be prepared for use. If this Gpio is already prepared, this function will return true. */
 bool Gpio::exportGpio()
 {
     qCDebug(dcGpio()) << "Export GPIO" << m_gpio;
+#ifdef NYMEA_GPIO_USE_SYSFS
     // Check if already exported
     if (m_gpioDirectory.exists()) {
         qCDebug(dcGpio()) << "GPIO" << m_gpio << "already exported.";
@@ -184,13 +288,41 @@ bool Gpio::exportGpio()
     out << m_gpio;
     exportFile.close();
     return true;
+#else
+    if (m_line && m_chip) {
+        qCDebug(dcGpio()) << "GPIO" << m_gpio << "already opened.";
+        return true;
+    }
+
+    if (!resolveLine()) {
+        qCWarning(dcGpio()) << "Could not resolve GPIO" << m_gpio << "to a gpiochip.";
+        return false;
+    }
+
+    const QByteArray chipName = m_chipName.toLatin1();
+    m_chip = gpiod_chip_open_by_name(chipName.constData());
+    if (!m_chip) {
+        qCWarning(dcGpio()) << "Could not open gpiochip" << m_chipName << ":" << strerror(errno);
+        return false;
+    }
+
+    m_line = gpiod_chip_get_line(m_chip, m_lineOffset);
+    if (!m_line) {
+        qCWarning(dcGpio()) << "Could not get line" << m_lineOffset << "from" << m_chipName << ":" << strerror(errno);
+        gpiod_chip_close(m_chip);
+        m_chip = nullptr;
+        return false;
+    }
+
+    return true;
+#endif
 }
 
-/*! Returns true if this Gpio could be unexported in the system file \tt {/sys/class/gpio/unexport}. */
+/*! Returns true if this Gpio could be released. */
 bool Gpio::unexportGpio()
 {
     qCDebug(dcGpio()) << "Unexport GPIO" << m_gpio;
-
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile unexportFile("/sys/class/gpio/unexport");
     if (!unexportFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO unexport file:" << unexportFile.errorString();
@@ -201,6 +333,22 @@ bool Gpio::unexportGpio()
     out << m_gpio;
     unexportFile.close();
     return true;
+#else
+    if (m_line) {
+        if (gpiod_line_is_requested(m_line))
+            gpiod_line_release(m_line);
+        m_line = nullptr;
+    }
+
+    if (m_chip) {
+        gpiod_chip_close(m_chip);
+        m_chip = nullptr;
+    }
+
+    m_direction = Gpio::DirectionInvalid;
+    m_edge = Gpio::EdgeNone;
+    return true;
+#endif
 }
 
 /*! Returns true if the \a direction of this GPIO could be set. \sa Gpio::Direction, */
@@ -212,6 +360,7 @@ bool Gpio::setDirection(Gpio::Direction direction)
         return false;
     }
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile directionFile(m_gpioDirectory.path() + QDir::separator() + "direction");
     if (!directionFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "direction file:" << directionFile.errorString();
@@ -234,11 +383,35 @@ bool Gpio::setDirection(Gpio::Direction direction)
 
     directionFile.close();
     return true;
+#else
+    if (!m_line && !exportGpio()) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not available.";
+        return false;
+    }
+
+    int outputValue = 0;
+    if (m_line && gpiod_line_is_requested(m_line)) {
+        const int current = gpiod_line_get_value(m_line);
+        if (current >= 0)
+            outputValue = current;
+    }
+
+    if (!requestLine(direction, EdgeNone, outputValue)) {
+        qCWarning(dcGpio()) << "Could not request GPIO" << m_gpio << "direction" << direction << ":" << strerror(errno);
+        return false;
+    }
+
+    m_direction = direction;
+    if (direction == DirectionOutput)
+        m_edge = EdgeNone;
+    return true;
+#endif
 }
 
 /*! Returns the direction of this Gpio. */
 Gpio::Direction Gpio::direction()
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile directionFile(m_gpioDirectory.path() + QDir::separator() + "direction");
     if (!directionFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "direction file:" << directionFile.fileName() << directionFile.errorString();
@@ -259,6 +432,9 @@ Gpio::Direction Gpio::direction()
     }
 
     return Gpio::DirectionInvalid;
+#else
+    return m_direction;
+#endif
 }
 
 /*! Returns true if the digital \a value of this Gpio could be set correctly. */
@@ -283,6 +459,7 @@ bool Gpio::setValue(Gpio::Value value)
         return false;
     }
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile valueFile(m_gpioDirectory.path() + QDir::separator() + "value");
     if (!valueFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "value file:" << valueFile.errorString();
@@ -304,11 +481,29 @@ bool Gpio::setValue(Gpio::Value value)
 
     valueFile.close();
     return true;
+#else
+    if (!m_line || !gpiod_line_is_requested(m_line)) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
+        return false;
+    }
+
+    const int physicalValue = logicalToPhysicalValue(value);
+    if (physicalValue < 0)
+        return false;
+
+    if (gpiod_line_set_value(m_line, physicalValue) < 0) {
+        qCWarning(dcGpio()) << "Could not set GPIO" << m_gpio << "value:" << strerror(errno);
+        return false;
+    }
+
+    return true;
+#endif
 }
 
 /*! Returns the current digital value of this Gpio. */
 Gpio::Value Gpio::value()
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile valueFile(m_gpioDirectory.path() + QDir::separator() + "value");
     if (!valueFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "value file:" << valueFile.errorString();
@@ -327,6 +522,20 @@ Gpio::Value Gpio::value()
     }
 
     return Gpio::ValueInvalid;
+#else
+    if (!m_line || !gpiod_line_is_requested(m_line)) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not requested.";
+        return Gpio::ValueInvalid;
+    }
+
+    const int value = gpiod_line_get_value(m_line);
+    if (value < 0) {
+        qCWarning(dcGpio()) << "Could not read GPIO" << m_gpio << "value:" << strerror(errno);
+        return Gpio::ValueInvalid;
+    }
+
+    return physicalToLogicalValue(value);
+#endif
 }
 
 /*! This method allows to invert the logic of this Gpio. Returns true, if the GPIO could be set \a activeLow. */
@@ -334,6 +543,7 @@ bool Gpio::setActiveLow(bool activeLow)
 {
     qCDebug(dcGpio()) << "Set GPIO" << m_gpio << "active low" << activeLow;
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile activeLowFile(m_gpioDirectory.path() + QDir::separator() + "active_low");
     if (!activeLowFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "active_low file:" << activeLowFile.errorString();
@@ -349,11 +559,16 @@ bool Gpio::setActiveLow(bool activeLow)
 
     activeLowFile.close();
     return true;
+#else
+    m_activeLow = activeLow;
+    return true;
+#endif
 }
 
 /*! Returns true if the logic of this Gpio is inverted (1 = low, 0 = high). */
 bool Gpio::activeLow()
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile activeLowFile(m_gpioDirectory.path() + QDir::separator() + "active_low");
     if (!activeLowFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "active_low file:" << activeLowFile.errorString();
@@ -369,6 +584,9 @@ bool Gpio::activeLow()
         return true;
 
     return false;
+#else
+    return m_activeLow;
+#endif
 }
 
 /*! Returns true if the \a edge of this GPIO could be set correctly. The \a edge parameter specifies, when an interrupt occurs. */
@@ -380,6 +598,7 @@ bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
     }
 
     qCDebug(dcGpio()) << "Set GPIO" << m_gpio << "edge interrupt" << edge;
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile edgeFile(m_gpioDirectory.path() + QDir::separator() + "edge");
     if (!edgeFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "edge file:" << edgeFile.errorString();
@@ -404,11 +623,27 @@ bool Gpio::setEdgeInterrupt(Gpio::Edge edge)
 
     edgeFile.close();
     return true;
+#else
+    if (!m_line && !exportGpio()) {
+        qCWarning(dcGpio()) << "GPIO" << m_gpio << "is not available.";
+        return false;
+    }
+
+    if (!requestLine(DirectionInput, edge, 0)) {
+        qCWarning(dcGpio()) << "Could not request GPIO" << m_gpio << "edge interrupt:" << strerror(errno);
+        return false;
+    }
+
+    m_direction = DirectionInput;
+    m_edge = edge;
+    return true;
+#endif
 }
 
 /*! Returns the edge interrupt of this Gpio. */
 Gpio::Edge Gpio::edgeInterrupt()
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     QFile edgeFile(m_gpioDirectory.path() + QDir::separator() + "edge");
     if (!edgeFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(dcGpio()) << "Could not open GPIO" << m_gpio << "edge file:" << edgeFile.errorString();
@@ -431,7 +666,87 @@ Gpio::Edge Gpio::edgeInterrupt()
     }
 
     return Gpio::EdgeNone;
+#else
+    return m_edge;
+#endif
 }
+
+#ifndef NYMEA_GPIO_USE_SYSFS
+bool Gpio::resolveLine()
+{
+    if (!m_chipName.isEmpty())
+        return true;
+
+    if (resolveLineFromSysfs(m_gpio, &m_chipName, &m_lineOffset))
+        return true;
+
+    if (resolveLineSequential(m_gpio, &m_chipName, &m_lineOffset))
+        return true;
+
+    return false;
+}
+
+bool Gpio::requestLine(Gpio::Direction direction, Gpio::Edge edge, int outputValue)
+{
+    if (!m_line)
+        return false;
+
+    if (gpiod_line_is_requested(m_line))
+        gpiod_line_release(m_line);
+
+    int ret = 0;
+    if (direction == DirectionOutput) {
+        ret = gpiod_line_request_output_flags(m_line, kGpioConsumer, 0, outputValue);
+    } else {
+        switch (edge) {
+        case EdgeRising:
+            ret = gpiod_line_request_rising_edge_events_flags(m_line, kGpioConsumer, 0);
+            break;
+        case EdgeFalling:
+            ret = gpiod_line_request_falling_edge_events_flags(m_line, kGpioConsumer, 0);
+            break;
+        case EdgeBoth:
+            ret = gpiod_line_request_both_edges_events_flags(m_line, kGpioConsumer, 0);
+            break;
+        case EdgeNone:
+            ret = gpiod_line_request_input_flags(m_line, kGpioConsumer, 0);
+            break;
+        }
+    }
+
+    return ret == 0;
+}
+
+int Gpio::logicalToPhysicalValue(Gpio::Value value) const
+{
+    switch (value) {
+    case ValueLow:
+        return m_activeLow ? 1 : 0;
+    case ValueHigh:
+        return m_activeLow ? 0 : 1;
+    default:
+        return -1;
+    }
+}
+
+Gpio::Value Gpio::physicalToLogicalValue(int value) const
+{
+    if (value < 0)
+        return ValueInvalid;
+
+    const bool physicalHigh = value != 0;
+    const bool logicalHigh = m_activeLow ? !physicalHigh : physicalHigh;
+    return logicalHigh ? ValueHigh : ValueLow;
+}
+
+int Gpio::eventFd() const
+{
+    if (!m_line)
+        return -1;
+
+    return gpiod_line_event_get_fd(m_line);
+}
+#endif
 
 /*! Prints the given \a gpio to \a debug. */
 QDebug operator<<(QDebug debug, Gpio *gpio)

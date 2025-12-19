@@ -13,6 +13,12 @@ SOURCES += \
         gpiobutton.cpp \
         gpiomonitor.cpp
 
+!contains(CONFIG, nymea_gpio_sysfs) {
+    CONFIG += link_pkgconfig
+    PKGCONFIG += libgpiod
+    QMAKE_PKGCONFIG_REQUIRES += libgpiod
+}
+
 target.path = $$[QT_INSTALL_LIBS]
 INSTALLS += target
 

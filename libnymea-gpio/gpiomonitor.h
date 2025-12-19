@@ -56,6 +56,9 @@ private:
     QSocketNotifier *m_notifier;
     QFile m_valueFile;
     bool m_currentValue;
+#ifndef NYMEA_GPIO_USE_SYSFS
+    int m_eventFd = -1;
+#endif
 
 signals:
     void valueChanged(const bool &value);

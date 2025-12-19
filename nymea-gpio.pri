@@ -11,6 +11,13 @@ greaterThan(QT_MAJOR_VERSION, 5) {
     DEFINES += QT_DISABLE_DEPRECATED_UP_TO=0x050F00
 }
 
+contains(CONFIG, nymea_gpio_sysfs) {
+    message("Building with legacy sysfs GPIO backend")
+    DEFINES += NYMEA_GPIO_USE_SYSFS
+} else {
+    message("Building with libgpiod GPIO backend")
+}
+
 QMAKE_CXXFLAGS += -Werror -g
 
 gcc {

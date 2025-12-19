@@ -70,12 +70,20 @@
 
 #include "gpiomonitor.h"
 
+#ifndef NYMEA_GPIO_USE_SYSFS
+#include <errno.h>
+#include <gpiod.h>
+#include <string.h>
+#endif
+
 /*! Constructs a \l{GpioMonitor} object with the given \a gpio number and \a parent. */
 GpioMonitor::GpioMonitor(int gpio, QObject *parent)
     : QObject(parent)
     , m_gpioNumber(gpio)
 {
+#ifdef NYMEA_GPIO_USE_SYSFS
     m_valueFile.setFileName("/sys/class/gpio/gpio" + QString::number(m_gpioNumber) + "/value");
+#endif
 }
 
 /*! Returns true if this \l{GpioMonitor} could be enabled successfully. With the \a activeLow parameter the values can be inverted.
@@ -91,6 +99,7 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
         return false;
     }
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     if (!m_valueFile.open(QFile::ReadOnly)) {
         qWarning(dcGpio()) << "GpioMonitor: Could not open value file for gpio monitor" << m_gpio->gpioNumber();
         return false;
@@ -98,6 +107,23 @@ bool GpioMonitor::enable(bool activeLow, Gpio::Edge edgeInterrupt)
 
     m_notifier = new QSocketNotifier(m_valueFile.handle(), QSocketNotifier::Exception);
     connect(m_notifier, &QSocketNotifier::activated, this, &GpioMonitor::readyReady);
+#else
+    m_eventFd = m_gpio->eventFd();
+    if (m_eventFd < 0) {
+        qCWarning(dcGpio()) << "GpioMonitor: Could not get event file descriptor for GPIO" << m_gpio->gpioNumber();
+        return false;
+    }
+
+    m_notifier = new QSocketNotifier(m_eventFd, QSocketNotifier::Read);
+    connect(m_notifier, &QSocketNotifier::activated, this, &GpioMonitor::readyReady);
+
+    const Gpio::Value initialValue = m_gpio->value();
+    if (initialValue == Gpio::ValueInvalid) {
+        qCWarning(dcGpio()) << "GpioMonitor: Could not read initial value for GPIO" << m_gpio->gpioNumber();
+        return false;
+    }
+    m_currentValue = (initialValue == Gpio::ValueHigh);
+#endif
 
     qCDebug(dcGpio()) << "Socket notififier started";
     m_notifier->setEnabled(true);
@@ -113,7 +139,11 @@ void GpioMonitor::disable()
     m_notifier = 0;
     m_gpio = 0;
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     m_valueFile.close();
+#else
+    m_eventFd = -1;
+#endif
 }
 
 /*! Returns true if this \l{GpioMonitor} is running. */
@@ -141,6 +171,7 @@ void GpioMonitor::readyReady(const int &ready)
 {
     Q_UNUSED(ready)
 
+#ifdef NYMEA_GPIO_USE_SYSFS
     m_valueFile.seek(0);
     QByteArray data = m_valueFile.readAll();
 
@@ -155,4 +186,22 @@ void GpioMonitor::readyReady(const int &ready)
 
     m_currentValue = value;
     emit valueChanged(value);
+#else
+    if (m_eventFd < 0)
+        return;
+
+    gpiod_line_event event;
+    if (gpiod_line_event_read_fd(m_eventFd, &event) < 0) {
+        qCWarning(dcGpio()) << "GpioMonitor: Could not read GPIO event:" << strerror(errno);
+        return;
+    }
+
+    const Gpio::Value current = m_gpio ? m_gpio->value() : Gpio::ValueInvalid;
+    if (current == Gpio::ValueInvalid)
+        return;
+
+    const bool value = current == Gpio::ValueHigh;
+    m_currentValue = value;
+    emit valueChanged(value);
+#endif
 }

@@ -35,9 +35,16 @@
 
 Q_DECLARE_LOGGING_CATEGORY(dcGpio)
 
+class GpioMonitor;
+
+struct gpiod_chip;
+struct gpiod_line;
+
 class Gpio : public QObject
 {
     Q_OBJECT
+
+    friend class GpioMonitor;
 
 public:
     enum Direction {
@@ -86,9 +93,25 @@ public:
     Gpio::Edge edgeInterrupt();
 
 private:
+#ifndef NYMEA_GPIO_USE_SYSFS
+    bool resolveLine();
+    bool requestLine(Gpio::Direction direction, Gpio::Edge edge, int outputValue);
+    int logicalToPhysicalValue(Gpio::Value value) const;
+    Gpio::Value physicalToLogicalValue(int value) const;
+    int eventFd() const;
+
+    QString m_chipName;
+    unsigned int m_lineOffset = 0;
+    gpiod_chip *m_chip = nullptr;
+    gpiod_line *m_line = nullptr;
+    bool m_activeLow = false;
+    Gpio::Edge m_edge = Gpio::EdgeNone;
+#endif
     int m_gpio = 0;
     Gpio::Direction m_direction = Gpio::DirectionOutput;
+#ifdef NYMEA_GPIO_USE_SYSFS
     QDir m_gpioDirectory;
+#endif
 };
 
 QDebug operator<<(QDebug debug, Gpio *gpio);

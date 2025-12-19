@@ -6,7 +6,9 @@ Standards-Version: 4.7.2
 Vcs-Git: https://github.com/nymea/nymea-gpio.git
 Build-Depends: debhelper,
                dpkg-dev,
+               pkg-config,
                qt6-base-dev,
+               libgpiod-dev,
                qt6-base-dev-tools,
 
 
@@ -37,6 +39,7 @@ Multi-Arch: same
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          pkg-config,
+         libgpiod-dev,
          libnymea-gpio (= ${binary:Version})
 Description: Qt based library for GPIO interaction - development files
   Development files for Qt based GPIO library.
