@@ -1,3 +1,11 @@
+nymea-gpio (1.14.0) noble; urgency=medium
+
+  [ Simon Stürz ]
+  * Add clang-format
+  * Add libgpiod support to libnymea-gpio
+
+ -- jenkins <developer@nymea.io>  Mon, 12 Jan 2026 10:46:54 +0100
+
 nymea-gpio (1.13.0) jammy; urgency=medium
 
   [ Simon Stürz ]
